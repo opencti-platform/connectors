@@ -8,6 +8,7 @@ import pycti
 import requests
 import tldextract
 import validators
+import whois
 from pycti import OpenCTIConnectorHelper
 from stix2 import (
     TLP_WHITE,
@@ -174,38 +175,25 @@ class RansomwareAPIConnector:
 
     # Fetches the whois information of a domain
     def fetch_country_domain(self, domain):
-        url = f"https://who-dat.as93.net/{domain}"
-        headers = {"user-agent": "OpenCTI"}
         try:
-            response = requests.get(url, headers=headers, timeout=(20000, 20000))
-            if response.status_code == 200:
-                response_json = response.json()
-                if response_json.get("whoisparser") == "domain is not found":
-                    self.helper.log_info(f"Domain {domain} is not found")
-                    return None
-
-            else:
-                return None
+            w = whois.whois(domain)
         except Exception as e:
             self.helper.log_error(f"Error fetching WHOIS for domain {domain}")
             self.helper.log_error(str(e))
             return None
+
         try:
             description = f"Domain:{domain}  \n"
-            if (
-                response_json.get("domain") is not None
-                and response_json.get("administrative") is not None
-            ):
-                if response_json.get("administrative").get("country") is not None:
-                    description += f" is registered in {response_json.get('administrative').get('country')}  \n"
-            if response_json.get("registrar") is not None:
-                description += (
-                    f"registered with {response_json.get('registrar').get('name')}  \n"
-                )
-            if response_json.get("domain").get("created_date") is not None:
-                description += f" creation_date {response_json.get('domain').get('created_date')}  \n"
-            if response_json.get("domain").get("expiration_date") is not None:
-                description += f" expiration_date {response_json.get('domain').get('expiration_date')}  \n"
+            # Using whois data from w instead of response_json
+            if w is not None:
+                if w.get("country") is not None:
+                    description += f" is registered in {w.get('country')}  \n"
+                if w.get("registrar") is not None:
+                    description += f"registered with {w.get('registrar')}  \n"
+                if w.get("creation_date") is not None:
+                    description += f" creation_date {w.get('creation_date')}  \n"
+                if w.get("expiration_date") is not None:
+                    description += f" expiration_date {w.get('expiration_date')}  \n"
 
         except Exception as e:
             self.helper.log_error(f"Error fetching whois for domain {domain}")
