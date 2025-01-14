@@ -3,7 +3,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import cached_property
 from posixpath import join as urljoin
 from typing import Any, Dict, Iterable, List, Set
@@ -19,6 +19,8 @@ from requests import RequestException
 #   But from a manual deployement, we have to use a Daemon for launching the service
 #   So i added a global var : gbl_scriptDir (not mandatory but for visibility purpose only)
 gbl_scriptDir: str = os.path.dirname(os.path.realpath(__file__))
+
+
 # so i propose the change on the relative path with the concat of the script dir path (go to line 374)
 
 
@@ -50,6 +52,13 @@ class Sekoia(object):
             "collection", config, "d6092c37-d8d7-45c3-8aff-c4dc26030608"
         )
         self.create_observables = self.get_config("create_observables", config, True)
+        self.import_source_list = get_config_variable(
+            "SEKOIA_IMPORT_SOURCE_LIST",
+            ["sekoia", "import_source_list"],
+            config,
+            default=False,
+        )
+        self.all_labels = []
 
         self.helper.log_info("Setting up api key")
         self.api_key = self.get_config("api_key", config)
@@ -64,7 +73,7 @@ class Sekoia(object):
             stix_id="identity--357447d7-9229-4ce1-b7fa-f1b83587048e",
             type="Organization",
             name="SEKOIA",
-            description="SEKOIA.IO is a European cybersecurity SAAS company, whose mission is to develop the best protection capabilities against cyber attacks.",
+            description="SEKOIA.IO is a European cybersecurity SaaS company, whose mission is to develop the best protection capabilities against cyber attacks.",
         )
         self.helper.api.marking_definition.create(
             stix_id="marking-definition--bf973641-9d22-45d7-a307-ccdc68e120b9",
@@ -82,9 +91,9 @@ class Sekoia(object):
         cursor = state.get("last_cursor", self.generate_first_cursor())
         self.helper.log_info(f"Starting with {cursor}")
 
-        friendly_name = "SEKOIA run @ " + datetime.utcnow().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        timestamp = int(time.time())
+        now = datetime.fromtimestamp(timestamp, timezone.utc)
+        friendly_name = "SEKOIA run @ " + now.strftime("%Y-%m-%d %H:%M:%S")
         try:
             work_id = self.helper.api.work.initiate_work(
                 self.helper.connect_id, friendly_name
@@ -163,10 +172,11 @@ class Sekoia(object):
         Yield successive n-sized chunks from items.
         """
         for i in range(0, len(items), chunk_size):
-            yield items[i : i + chunk_size]
+            yield items[i: i + chunk_size]
 
     def _run(self, cursor, work_id):
-        current_time = f"{datetime.utcnow().isoformat()}Z"
+
+        current_time = f"{datetime.now(timezone.utc).isoformat()}Z"
         current_cursor = base64.b64encode(current_time.encode("utf-8")).decode("utf-8")
 
         params = {"limit": self.limit, "cursor": cursor}
@@ -192,13 +202,18 @@ class Sekoia(object):
         [all_related_objects, all_relationships] = (
             self._retrieve_related_objects_and_relationships(items)
         )
+
+        if self.import_source_list:
+            all_related_objects = self._add_sources_to_items(all_related_objects)
+
         items += all_related_objects + all_relationships
         bundle = self.helper.stix2_create_bundle(items)
         try:
             self.helper.send_stix2_bundle(bundle, work_id=work_id)
         except RecursionError:
             self.helper.log_error(
-                "A recursion error occured, circular dependencies detected in the Sekoia bundle, sending the whole bundle but please fix it"
+                "A recursion error occured, circular dependencies detected in the Sekoia bundle, sending the whole "
+                "bundle but please fix it "
             )
             self.helper.send_stix2_bundle(bundle, work_id=work_id, bypass_split=True)
 
@@ -249,9 +264,9 @@ class Sekoia(object):
             "x_ic_impacted_sectors",
         ]
         return (
-            (field.startswith("x_ic") or field.startswith("x_inthreat"))
-            and (field.endswith("ref") or field.endswith("refs"))
-        ) or field in to_ignore
+                       (field.startswith("x_ic") or field.startswith("x_inthreat"))
+                       and (field.endswith("ref") or field.endswith("refs"))
+               ) or field in to_ignore
 
     def _retrieve_related_objects_and_relationships(self, indicators: List[Dict]):
         all_related_objects = []
@@ -296,9 +311,9 @@ class Sekoia(object):
     def _add_main_observable_type_to_indicators(items: List[Dict]):
         for item in items:
             if (
-                item.get("type") == "indicator"
-                and item.get("x_ic_observable_types") is not None
-                and len(item.get("x_ic_observable_types")) > 0
+                    item.get("type") == "indicator"
+                    and item.get("x_ic_observable_types") is not None
+                    and len(item.get("x_ic_observable_types")) > 0
             ):
                 stix_type = item.get("x_ic_observable_types")[0]
                 item["x_opencti_main_observable_type"] = (
@@ -306,7 +321,7 @@ class Sekoia(object):
                 )
 
     def _retrieve_references(
-        self, items: List[Dict], current_depth: int = 0
+            self, items: List[Dict], current_depth: int = 0
     ) -> List[Dict]:
         """
         Retrieve the references that appears in the given items.
@@ -314,7 +329,7 @@ class Sekoia(object):
         To avoid having an infinite recursion a safe guard has been implemented.
         """
         if current_depth == 5:
-            # Safe guard to avoid infinite recursion if an object was not found for example
+            # Safeguard to avoid infinite recursion if an object was not found for example
             return items
 
         items = self._update_mapped_refs(items)
@@ -370,8 +385,8 @@ class Sekoia(object):
         Whether or not the reference is a mapped one.
         """
         return (
-            ref in self._geography_mapping.values()
-            or ref in self._sectors_mapping.values()
+                ref in self._geography_mapping.values()
+                or ref in self._sectors_mapping.values()
         )
 
     def _update_mapped_refs(self, items: List[Dict]):
@@ -429,7 +444,7 @@ class Sekoia(object):
         Add item to the cache only if it is an identity or a marking definition
         """
         if item["id"].startswith("marking-definition--") or item["id"].startswith(
-            "identity--"
+                "identity--"
         ):
             if item["id"].startswith("marking-definition--"):
                 item.pop("object_marking_refs", None)
@@ -511,6 +526,54 @@ class Sekoia(object):
                             "no_trigger_import": True,
                         }
                     )
+
+    def _create_custom_label(self, name_label: str, color_label: str):
+        """
+        This method allows you to create a custom label, using the OpenCTI API.
+
+        :param name_label: A parameter giving the name of the label.
+        :param color_label: A parameter giving the color of the label.
+        """
+
+        new_custom_label = self.helper.api.label.read_or_create_unchecked(
+            value=name_label, color=color_label
+        )
+        if new_custom_label is None:
+            self.helper.connector_logger.error(
+                "[ERROR] The label could not be created. If your connector does not have the permission to create "
+                "labels, "
+                "please create it manually before launching",
+                {"name_label": name_label},
+            )
+        else:
+            self.all_labels.append(new_custom_label["value"])
+
+    def _add_sources_to_items(self, items: List[Dict]):
+        object_list = []
+        for item in items:
+            if not item.get("x_inthreat_sources_refs"):
+                continue
+
+            labels = []
+            sources = self._retrieve_by_ids(item.get("x_inthreat_sources_refs", []), self.get_object_url)
+            for source in sources:
+                label_name = "source:" + source["name"]
+                if label_name not in self.all_labels:
+                    self._create_custom_label(label_name, "#f8c167")
+
+                labels.append(label_name)
+
+            if labels:
+                if item.get("custom_properties", []):
+                    if item["custom_properties"].get("x_opencti_labels", []):
+                        item["custom_properties"]["x_opencti_labels"].extend(labels)
+                    else:
+                        item["custom_properties"]["x_opencti_labels"] = labels
+                else:
+                    item["custom_properties"] = {"x_opencti_labels": labels}
+            object_list.append(item)
+
+        return object_list
 
 
 if __name__ == "__main__":
