@@ -557,20 +557,18 @@ class Sekoia(object):
             labels = []
             sources = self._retrieve_by_ids(item.get("x_inthreat_sources_refs", []), self.get_object_url)
             for source in sources:
-                label_name = "source:" + source["name"]
+                label_name = "source:" + str(source["name"])
+                label_name = label_name.lower()
                 if label_name not in self.all_labels:
                     self._create_custom_label(label_name, "#f8c167")
 
                 labels.append(label_name)
 
             if labels:
-                if item.get("custom_properties", []):
-                    if item["custom_properties"].get("x_opencti_labels", []):
-                        item["custom_properties"]["x_opencti_labels"].extend(labels)
-                    else:
-                        item["custom_properties"]["x_opencti_labels"] = labels
+                if item.get("x_opencti_labels", []):
+                    item["x_opencti_labels"].extend(labels)
                 else:
-                    item["custom_properties"] = {"x_opencti_labels": labels}
+                    item["x_opencti_labels"] = labels
             object_list.append(item)
 
         return object_list
