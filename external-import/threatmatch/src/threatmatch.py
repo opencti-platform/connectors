@@ -7,6 +7,7 @@ from datetime import datetime
 
 import requests
 import yaml
+from bs4 import BeautifulSoup
 from pycti import OpenCTIConnectorHelper, get_config_variable
 
 
@@ -50,13 +51,6 @@ class ThreatMatch:
             False,
             True,
         )
-        # self.threatmatch_import_reports = get_config_variable(
-        #    "THREATMATCH_IMPORT_REPORTS",
-        #    ["threatmatch", "import_reports"],
-        #    config,
-        #    False,
-        #    True,
-        # )
         self.threatmatch_import_iocs = get_config_variable(
             "THREATMATCH_IMPORT_IOCS",
             ["threatmatch", "import_iocs"],
@@ -103,10 +97,12 @@ class ThreatMatch:
         if r.status_code != 200:
             self.helper.log_error(str(r.text))
             return []
-        # if 'error' in r.json():
-        #    return []
         if r.status_code == 200:
             data = r.json()["objects"]
+            for object in data:
+                object["description"] = BeautifulSoup(
+                    object["description"], "html.parser"
+                ).get_text()
             return data
 
     def _process_list(self, work_id, token, type, list):
@@ -215,21 +211,6 @@ class ThreatMatch:
                             self._process_list(
                                 work_id, token, "alerts", data.get("list")
                             )
-                        # if self.threatmatch_import_reports:
-                        #    r = requests.get(
-                        #        self.threatmatch_url + "/api/reports/all",
-                        #        headers=headers,
-                        #        json={
-                        #            "mode": "compact",
-                        #            "date_since": import_from_date,
-                        #        },
-                        #    )
-                        #    if r.status_code != 200:
-                        #        self.helper.log_error(str(r.text))
-                        #    data = r.json()
-                        #    self._process_list(
-                        #        work_id, token, "reports", data.get("list")
-                        #    )
                         if self.threatmatch_import_iocs:
                             response = requests.get(
                                 self.threatmatch_url + "/api/taxii/groups",
