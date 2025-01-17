@@ -172,7 +172,7 @@ class Sekoia(object):
         Yield successive n-sized chunks from items.
         """
         for i in range(0, len(items), chunk_size):
-            yield items[i: i + chunk_size]
+            yield items[i : i + chunk_size]
 
     def _run(self, cursor, work_id):
 
@@ -264,9 +264,9 @@ class Sekoia(object):
             "x_ic_impacted_sectors",
         ]
         return (
-                       (field.startswith("x_ic") or field.startswith("x_inthreat"))
-                       and (field.endswith("ref") or field.endswith("refs"))
-               ) or field in to_ignore
+            (field.startswith("x_ic") or field.startswith("x_inthreat"))
+            and (field.endswith("ref") or field.endswith("refs"))
+        ) or field in to_ignore
 
     def _retrieve_related_objects_and_relationships(self, indicators: List[Dict]):
         all_related_objects = []
@@ -311,9 +311,9 @@ class Sekoia(object):
     def _add_main_observable_type_to_indicators(items: List[Dict]):
         for item in items:
             if (
-                    item.get("type") == "indicator"
-                    and item.get("x_ic_observable_types") is not None
-                    and len(item.get("x_ic_observable_types")) > 0
+                item.get("type") == "indicator"
+                and item.get("x_ic_observable_types") is not None
+                and len(item.get("x_ic_observable_types")) > 0
             ):
                 stix_type = item.get("x_ic_observable_types")[0]
                 item["x_opencti_main_observable_type"] = (
@@ -321,7 +321,7 @@ class Sekoia(object):
                 )
 
     def _retrieve_references(
-            self, items: List[Dict], current_depth: int = 0
+        self, items: List[Dict], current_depth: int = 0
     ) -> List[Dict]:
         """
         Retrieve the references that appears in the given items.
@@ -385,8 +385,8 @@ class Sekoia(object):
         Whether or not the reference is a mapped one.
         """
         return (
-                ref in self._geography_mapping.values()
-                or ref in self._sectors_mapping.values()
+            ref in self._geography_mapping.values()
+            or ref in self._sectors_mapping.values()
         )
 
     def _update_mapped_refs(self, items: List[Dict]):
@@ -444,7 +444,7 @@ class Sekoia(object):
         Add item to the cache only if it is an identity or a marking definition
         """
         if item["id"].startswith("marking-definition--") or item["id"].startswith(
-                "identity--"
+            "identity--"
         ):
             if item["id"].startswith("marking-definition--"):
                 item.pop("object_marking_refs", None)
@@ -555,7 +555,9 @@ class Sekoia(object):
                 continue
 
             labels = []
-            sources = self._retrieve_by_ids(item.get("x_inthreat_sources_refs", []), self.get_object_url)
+            sources = self._retrieve_by_ids(
+                item.get("x_inthreat_sources_refs", []), self.get_object_url
+            )
             for source in sources:
                 label_name = "source:" + str(source["name"])
                 label_name = label_name.lower()
