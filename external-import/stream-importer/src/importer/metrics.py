@@ -23,7 +23,9 @@ class Metrics:
             "read_files_total", "Number of files read from minio", ["name"]
         )
         self._import_up = Gauge(
-            "import_up", "Set to 1 if import is successfully running, 0 in case of issues (either incorrect file number or malformatted data)", ["name"]
+            "import_up",
+            "Set to 1 if import is successfully running, 0 in case of issues (either incorrect file number or malformatted data)",
+            ["name"],
         )
 
     def send(self):

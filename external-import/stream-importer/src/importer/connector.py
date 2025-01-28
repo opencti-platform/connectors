@@ -111,7 +111,9 @@ class StreamImporterConnector(ExternalImportConnector):
                 self.helper.set_state(state)
             except json.decoder.JSONDecodeError as e:
                 self.metrics.import_down()
-                self.helper.log_error(f"File {obj.object_name} is malformatted, not processing")
+                self.helper.log_error(
+                    f"File {obj.object_name} is malformatted, not processing: {e}"
+                )
             finally:
                 response.close()
                 response.release_conn()
