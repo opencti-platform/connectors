@@ -14,7 +14,7 @@ services:
       - CONNECTOR_LOG_LEVEL=info
       - CONNECTOR_RUN_EVERY=1m
       # Connector's custom execution parameters:
-      - PERFECT_SYNC=true
+      - PERFECT_SYNC=false
       - MINIO_ENDPOINT=minio
       - MINIO_PORT=9000
       - MINIO_BUCKET=opencti-export

@@ -49,7 +49,7 @@ class StreamImporterConnector(ExternalImportConnector):
         minio_cert_check = str_to_bool(
             os.environ.get("MINIO_CERT_CHECK", default="true")
         )
-        self.perfect_sync = str_to_bool(os.environ.get("PERFECT_SYNC", default="true"))
+        self.perfect_sync = str_to_bool(os.environ.get("PERFECT_SYNC", default="false"))
         self.helper.log_info(f"Perfect synchronization: {self.perfect_sync}")
 
         self.helper.log_info(f"Minio endpoint: {minio_endpoint}:{minio_port}")
@@ -96,7 +96,7 @@ class StreamImporterConnector(ExternalImportConnector):
             state = self.helper.get_state() or {}
             expected_file_number = state.get("file_count", 0) + 1
             if expected_file_number != file_number:
-                self.metrics.wrong_file_order()
+                self.metrics.import_down()
                 raise WrongFileOrder(obj.object_name, expected_file_number)
             try:
                 response = self.minio_client.get_object(
@@ -109,6 +109,9 @@ class StreamImporterConnector(ExternalImportConnector):
                 # Update the state
                 state["file_count"] = expected_file_number
                 self.helper.set_state(state)
+            except json.decoder.JSONDecodeError as e:
+                self.metrics.import_down()
+                self.helper.log_error(f"File {obj.object_name} is malformatted, not processing")
             finally:
                 response.close()
                 response.release_conn()
