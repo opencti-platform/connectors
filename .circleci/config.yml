@@ -2061,6 +2061,889 @@ jobs:
       - ms-teams/report:
           only_on_fail: true
           webhook_url: $MS_TEAMS_WEBHOOK_URL
+  build_prerelease_1:
+    working_directory: ~/opencti
+    docker:
+      - image: cimg/base:stable-20.04
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: sudo apt-get update -qq && sudo apt install curl gettext-base
+      - run:
+          working_directory: ~/opencti
+          name: Replace pycti requirement of stable version with latest prerelease branch code
+          command: find . -name requirements.txt -exec sed 's|^pycti==.*$|pycti @ git+https://github.com/OpenCTI-Platform/client-python@$PRE_RELEASE_VERSION|' -i {} \;
+      - run:
+          working_directory: ~/opencti/internal-import-file/import-file-stix
+          name: Build Docker image opencti/connector-import-file-stix
+          command: docker build -t opencti/connector-import-file-stix:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-import-file/import-document
+          name: Build Docker image opencti/connector-import-document
+          command: docker build -t opencti/connector-import-document:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-export-file/export-file-stix
+          name: Build Docker image opencti/connector-export-file-stix
+          command: docker build -t opencti/connector-export-file-stix:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-export-file/export-file-txt
+          name: Build Docker image opencti/connector-export-file-txt
+          command: docker build -t opencti/connector-export-file-txt:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/hygiene
+          name: Build Docker image opencti/connector-hygiene
+          command: docker build -t opencti/connector-hygiene:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/alienvault
+          name: Build Docker image opencti/connector-alienvault
+          command: docker build -t opencti/connector-alienvault:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/diode-import
+          name: Build Docker image opencti/connector-diode-import
+          command: docker build -t opencti/connector-diode-import:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/wiz
+          name: Build Docker image opencti/connector-wiz
+          command: docker build -t opencti/connector-wiz:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/crowdstrike
+          name: Build Docker image opencti/connector-crowdstrike
+          command: docker build -t opencti/connector-crowdstrike:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cuckoo
+          name: Build Docker image opencti/connector-cuckoo
+          command: docker build -t opencti/connector-cuckoo:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-export-file/export-file-csv
+          name: Build Docker image opencti/connector-export-file-csv
+          command: docker build -t opencti/connector-export-file-csv:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cape
+          name: Build Docker image opencti/connector-cape
+          command: docker build -t opencti/connector-cape:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/misp
+          name: Build Docker image opencti/connector-misp
+          command: docker build -t opencti/connector-misp:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/mitre
+          name: Build Docker image opencti/connector-mitre
+          command: docker build -t opencti/connector-mitre:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/opencti
+          name: Build Docker image opencti/connector-opencti
+          command: docker build -t opencti/connector-opencti:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cve
+          name: Build Docker image opencti/connector-cve
+          command: docker build -t opencti/connector-cve:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/ipinfo
+          name: Build Docker image opencti/connector-ipinfo
+          command: docker build -t opencti/connector-ipinfo:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/virustotal
+          name: Build Docker image opencti/connector-virustotal
+          command: docker build -t opencti/connector-virustotal:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/virustotal-downloader
+          name: Build Docker image opencti/connector-virustotal-downloader
+          command: docker build -t opencti/connector-virustotal-downloader:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/lastinfosec
+          name: Build Docker image opencti/connector-lastinfosec
+          command: docker build -t opencti/connector-lastinfosec:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/malpedia
+          name: Build Docker image opencti/connector-malpedia
+          command: docker build -t opencti/connector-malpedia:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/mwdb
+          name: Build Docker image opencti/connector-mwdb
+          command: docker build -t opencti/connector-mwdb:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/riskiq
+          name: Build Docker image opencti/connector-riskiq
+          command: docker build -t opencti/connector-riskiq:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/valhalla
+          name: Build Docker image opencti/connector-valhalla
+          command: docker build -t opencti/connector-valhalla:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/tanium
+          name: Build Docker image opencti/connector-tanium
+          command: docker build -t opencti/connector-tanium:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/mandiant
+          name: Build Docker image opencti/connector-mandiant
+          command: docker build -t opencti/connector-mandiant:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/kaspersky
+          name: Build Docker image opencti/connector-kaspersky
+          command: docker build -t opencti/connector-kaspersky:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/greynoise
+          name: Build Docker image opencti/connector-greynoise
+          command: docker build -t opencti/connector-greynoise:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/taxii2
+          name: Build Docker image opencti/connector-taxii2
+          command: docker build -t opencti/connector-taxii2:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/thehive
+          name: Build Docker image opencti/connector-thehive
+          command: docker build -t opencti/connector-thehive:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/abuseipdb
+          name: Build Docker image opencti/connector-abuseipdb
+          command: docker build -t opencti/connector-abuseipdb:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/urlhaus
+          name: Build Docker image opencti/connector-urlhaus
+          command: docker build -t opencti/connector-urlhaus:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/malbeacon
+          name: Build Docker image opencti/connector-malbeacon
+          command: docker build -t opencti/connector-malbeacon:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/crowdsec
+          name: Build Docker image opencti/connector-crowdsec
+          command: docker build -t opencti/connector-crowdsec:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/sophoslabs-intelix
+          name: Build Docker image opencti/connector-sophoslabs-intelix
+          command: docker build -t opencti/connector-sophoslabs-intelix:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/flashpoint
+          name: Build Docker image opencti/connector-flashpoint
+          command: docker build -t opencti/connector-flashpoint:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/tagger
+          name: Build Docker image opencti/connector-tagger
+          command: docker build -t opencti/connector-tagger:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/eset
+          name: Build Docker image opencti/connector-eset
+          command: docker build -t opencti/connector-eset:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/silobreaker
+          name: Build Docker image opencti/connector-silobreaker
+          command: docker build -t opencti/connector-silobreaker:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cybersixgill
+          name: Build Docker image opencti/connector-cybersixgill
+          command: docker build -t opencti/connector-cybersixgill:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/tweetfeed
+          name: Build Docker image opencti/connector-tweetfeed
+          command: docker build -t opencti/connector-tweetfeed:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/threatfox
+          name: Build Docker image opencti/connector-threatfox
+          command: docker build -t opencti/connector-threatfox:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/vmray-analyzer
+          name: Build Docker image opencti/connector-vmray-analyzer
+          command: docker build -t opencti/connector-vmray-analyzer:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/virustotal-livehunt-rules
+          name: Build Docker image opencti/connector-virustotal-livehunt-rules
+          command: docker build -t opencti/connector-virustotal-livehunt-rules:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/taxii-post
+          name: Build Docker image opencti/connector-taxii-post
+          command: docker build -t opencti/connector-taxii-post:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/feedly
+          name: Build Docker image opencti/connector-feedly
+          command: docker build -t opencti/connector-feedly:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/logrhythm
+          name: Build Docker image opencti/connector-logrhythm
+          command: docker build -t opencti/connector-logrhythm:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/orion-malware
+          name: Build Docker image opencti/connector-orion-malware
+          command: docker build -t opencti/connector-orion-malware:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/comlaude
+          name: Build Docker image opencti/connector-comlaude
+          command: docker build -t opencti/connector-comlaude:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/crtsh
+          name: Build Docker image opencti/connector-crtsh
+          command: docker build -t opencti/connector-crtsh:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/rst-report-hub
+          name: Build Docker image opencti/connector-rst-report-hub
+          command: docker build -t opencti/connector-rst-report-hub:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/rst-threat-feed
+          name: Build Docker image opencti/connector-rst-threat-feed
+          command: docker build -t opencti/connector-rst-threat-feed:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/hostio
+          name: Build Docker image opencti/connector-hostio
+          command: docker build -t opencti/connector-hostio:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/intelfinder
+          name: Build Docker image opencti/connector-intelfinder
+          command: docker build -t opencti/connector-intelfinder:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-export-file/export-ttps-file-navigator
+          name: Build Docker image opencti/connector-export-ttps-file-navigator
+          command: docker build -t opencti/connector-export-ttps-file-navigator:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/google-drive
+          name: Build Docker image opencti/connector-google-drive
+          command: docker build -t opencti/connector-google-drive:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/crowdstrike-endpoint-security
+          name: Build Docker image opencti/connector-crowdstrike-endpoint-security
+          command: docker build -t opencti/connector-crowdstrike-endpoint-security:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/dnstwist
+          name: Build Docker image opencti/connector-dnstwist
+          command: docker build -t opencti/connector-dnstwist:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cpe
+          name: Build Docker image opencti/connector-cpe
+          command: docker build -t opencti/connector-cpe:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/urlscan-enrichment
+          name: Build Docker image opencti/connector-urlscan-enrichment
+          command: docker build -t opencti/connector-urlscan-enrichment:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/mitre-atlas
+          name: Build Docker image opencti/connector-mitre-atlas
+          command: docker build -t opencti/connector-mitre-atlas:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/malcore
+          name: Build Docker image opencti/connector-malcore
+          command: docker build -t opencti/connector-malcore:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/infoblox
+          name: Build Docker image opencti/connector-infoblox
+          command: docker build -t opencti/connector-infoblox:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cisco-sma
+          name: Build Docker image opencti/connector-cisco-sma
+          command: docker build -t opencti/connector-cisco-sma:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/fortinet-ti
+          name: Build Docker image opencti/connector-fortinet-ti
+          command: docker build -t opencti/connector-fortinet-ti:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/safebrowsing
+          name: Build Docker image opencti/connector-google-safebrowsing
+          command: docker build -t opencti/connector-google-safebrowsing:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cofense
+          name: Build Docker image opencti/connector-cofense
+          command: docker build -t opencti/connector-cofense:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/group-ib
+          name: Build Docker image opencti/connector-group-ib
+          command: docker build -t opencti/connector-group-ib:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/first-epss
+          name: Build Docker image opencti/connector-first-epss
+          command: docker build -t opencti/connector-first-epss:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/reversinglabs-spectra-analyze
+          name: Build Docker image opencti/connector-reversinglabs-spectra-analyze
+          command: docker build -t opencti/connector-reversinglabs-spectra-analyze:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/shadowtrackr
+          name: Build Docker image opencti/connector-shadowtrackr
+          command: docker build -t opencti/connector-shadowtrackr:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/greynoise-vuln
+          name: Build Docker image opencti/connector-greynoise-vuln
+          command: docker build -t opencti/connector-greynoise-vuln:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/tenable-vuln-management
+          name: Build Docker image opencti/connector-tenable-vuln-management
+          command: docker build -t opencti/connector-tenable-vuln-management:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/attribution-tools
+          name: Build Docker image opencti/connector-attribution-tools
+          command: docker build -t opencti/connector-attribution-tools:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/tenable-security-center
+          name: Build Docker image opencti/connector-tenable-security-center
+          command: docker build -t opencti/connector-tenable-security-center:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/ipsum
+          name: Build Docker image opencti/connector-ipsum
+          command: docker build -t opencti/connector-ipsum:prerelease .
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push opencti/connector-import-file-stix:prerelease
+            docker push opencti/connector-import-document:prerelease
+            docker push opencti/connector-export-file-stix:prerelease
+            docker push opencti/connector-export-file-csv:prerelease
+            docker push opencti/connector-export-file-txt:prerelease
+            docker push opencti/connector-hygiene:prerelease
+            docker push opencti/connector-alienvault:prerelease
+            docker push opencti/connector-diode-import:prerelease
+            docker push opencti/connector-wiz:prerelease
+            docker push opencti/connector-crowdstrike:prerelease
+            docker push opencti/connector-cuckoo:prerelease
+            docker push opencti/connector-cape:prerelease
+            docker push opencti/connector-misp:prerelease
+            docker push opencti/connector-mitre:prerelease
+            docker push opencti/connector-opencti:prerelease
+            docker push opencti/connector-cve:prerelease
+            docker push opencti/connector-ipinfo:prerelease
+            docker push opencti/connector-virustotal:prerelease
+            docker push opencti/connector-virustotal-downloader:prerelease
+            docker push opencti/connector-lastinfosec:prerelease
+            docker push opencti/connector-malpedia:prerelease
+            docker push opencti/connector-mwdb:prerelease
+            docker push opencti/connector-riskiq:prerelease
+            docker push opencti/connector-valhalla:prerelease
+            docker push opencti/connector-tanium:prerelease
+            docker push opencti/connector-mandiant:prerelease
+            docker push opencti/connector-kaspersky:prerelease
+            docker push opencti/connector-greynoise:prerelease
+            docker push opencti/connector-taxii2:prerelease
+            docker push opencti/connector-thehive:prerelease
+            docker push opencti/connector-abuseipdb:prerelease
+            docker push opencti/connector-urlhaus:prerelease
+            docker push opencti/connector-malbeacon:prerelease
+            docker push opencti/connector-crowdsec:prerelease
+            docker push opencti/connector-sophoslabs-intelix:prerelease
+            docker push opencti/connector-flashpoint:prerelease
+            docker push opencti/connector-tagger:prerelease
+            docker push opencti/connector-eset:prerelease
+            docker push opencti/connector-silobreaker:prerelease
+            docker push opencti/connector-cybersixgill:prerelease
+            docker push opencti/connector-tweetfeed:prerelease
+            docker push opencti/connector-threatfox:prerelease
+            docker push opencti/connector-vmray-analyzer:prerelease
+            docker push opencti/connector-virustotal-livehunt-rules:prerelease
+            docker push opencti/connector-taxii-post:prerelease
+            docker push opencti/connector-feedly:prerelease
+            docker push opencti/connector-logrhythm:prerelease
+            docker push opencti/connector-orion-malware:prerelease
+            docker push opencti/connector-comlaude:prerelease
+            docker push opencti/connector-crtsh:prerelease
+            docker push opencti/connector-rst-report-hub:prerelease
+            docker push opencti/connector-rst-threat-feed:prerelease
+            docker push opencti/connector-hostio:prerelease
+            docker push opencti/connector-intelfinder:prerelease
+            docker push opencti/connector-export-ttps-file-navigator:prerelease
+            docker push opencti/connector-google-drive:prerelease
+            docker push opencti/connector-crowdstrike-endpoint-security:prerelease
+            docker push opencti/connector-dnstwist:prerelease
+            docker push opencti/connector-cpe:prerelease
+            docker push opencti/connector-urlscan-enrichment:prerelease
+            docker push opencti/connector-mitre-atlas:prerelease
+            docker push opencti/connector-malcore:prerelease
+            docker push opencti/connector-infoblox:prerelease
+            docker push opencti/connector-cisco-sma:prerelease
+            docker push opencti/connector-fortinet-ti:prerelease
+            docker push opencti/connector-google-safebrowsing:prerelease
+            docker push opencti/connector-cofense:prerelease
+            docker push opencti/connector-group-ib:prerelease
+            docker push opencti/connector-first-epss:prerelease
+            docker push opencti/connector-reversinglabs-spectra-analyze:prerelease
+            docker push opencti/connector-shadowtrackr:prerelease
+            docker push opencti/connector-greynoise-vuln:prerelease
+            docker push opencti/connector-tenable-vuln-management:prerelease
+            docker push opencti/connector-attribution-tools:prerelease
+            docker push opencti/connector-tenable-security-center:prerelease
+            docker push opencti/connector-ipsum:prerelease
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - ms-teams/report:
+          only_on_fail: true
+          webhook_url: $MS_TEAMS_WEBHOOK_URL
+  build_prerelease_2:
+    working_directory: ~/opencti
+    docker:
+      - image: cimg/base:stable-20.04
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: sudo apt-get update -qq && sudo apt install curl gettext-base
+      - run:
+          working_directory: ~/opencti
+          name: Replace pycti requirement of stable version with latest prerelease branch code
+          command: find . -name requirements.txt -exec sed 's|^pycti==.*$|pycti @ git+https://github.com/OpenCTI-Platform/client-python@$PRE_RELEASE_VERSION|' -i {} \;
+      - run:
+          working_directory: ~/opencti/external-import/sekoia
+          name: Build Docker image opencti/connector-sekoia
+          command: docker build -t opencti/connector-sekoia:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/hybrid-analysis-sandbox
+          name: Build Docker image opencti/connector-hybrid-analysis-sandbox
+          command: docker build -t opencti/connector-hybrid-analysis-sandbox:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/elastic
+          name: Build Docker image opencti/connector-elastic
+          command: docker build -t opencti/connector-elastic:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/vxvault
+          name: Build Docker image opencti/connector-vxvault
+          command: docker build -t opencti/connector-vxvault:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/shodan
+          name: Build Docker image opencti/connector-shodan
+          command: docker build -t opencti/connector-shodan:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/shodan-internetdb
+          name: Build Docker image opencti/connector-shodan-internetdb
+          command: docker build -t opencti/connector-shodan-internetdb:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/import-external-reference
+          name: Build Docker image opencti/connector-import-external-reference
+          command: docker build -t opencti/connector-import-external-reference:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/backup-files
+          name: Build Docker image opencti/connector-backup-files
+          command: docker build -t opencti/connector-backup-files:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/threatmatch
+          name: Build Docker image opencti/connector-threatmatch
+          command: docker build -t opencti/connector-threatmatch:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/restore-files
+          name: Build Docker image opencti/connector-restore-files
+          command: docker build -t opencti/connector-restore-files:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/virustotal-livehunt-notifications
+          name: Build Docker image opencti/connector-virustotal-livehunt-notifications
+          command: docker build -t opencti/connector-virustotal-livehunt-notifications:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/cape-sandbox
+          name: Build Docker image opencti/connector-cape-sandbox
+          command: docker build -t opencti/connector-cape-sandbox:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/domaintools
+          name: Build Docker image opencti/connector-domaintools
+          command: docker build -t opencti/connector-domaintools:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/intezer-sandbox
+          name: Build Docker image opencti/connector-intezer-sandbox
+          command: docker build -t opencti/connector-intezer-sandbox:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/hatching-triage-sandbox
+          name: Build Docker image opencti/connector-hatching-triage-sandbox
+          command: docker build -t opencti/connector-hatching-triage-sandbox:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/unpac-me
+          name: Build Docker image opencti/connector-unpac-me
+          command: docker build -t opencti/connector-unpac-me:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/ivre
+          name: Build Docker image opencti/connector-ivre
+          command: docker build -t opencti/connector-ivre:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/malwarebazaar-recent-additions
+          name: Build Docker image opencti/connector-malwarebazaar-recent-additions
+          command: docker build -t opencti/connector-malwarebazaar-recent-additions:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/urlhaus-recent-payloads
+          name: Build Docker image opencti/connector-urlhaus-recent-payloads
+          command: docker build -t opencti/connector-urlhaus-recent-payloads:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-export-file/export-report-pdf
+          name: Build Docker image opencti/connector-export-report-pdf
+          command: docker build -t opencti/connector-export-report-pdf:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/obstracts
+          name: Build Docker image opencti/connector-obstracts
+          command: docker build -t opencti/connector-obstracts:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/stixify
+          name: Build Docker image opencti/connector-stixify
+          command: docker build -t opencti/connector-stixify:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/vulmatch
+          name: Build Docker image opencti/connector-vulmatch
+          command: docker build -t opencti/connector-vulmatch:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/siemrules
+          name: Build Docker image opencti/connector-siemrules
+          command: docker build -t opencti/connector-siemrules:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cisa-known-exploited-vulnerabilities
+          name: Build Docker image opencti/connector-cisa-known-exploited-vulnerabilities
+          command: docker build -t opencti/connector-cisa-known-exploited-vulnerabilities:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cyber-campaign-collection
+          name: Build Docker image opencti/connector-cyber-campaign-collection
+          command: docker build -t opencti/connector-cyber-campaign-collection:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/socprime
+          name: Build Docker image opencti/connector-socprime
+          command: docker build -t opencti/connector-socprime:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/urlscan
+          name: Build Docker image opencti/connector-urlscan
+          command: docker build -t opencti/connector-urlscan:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/maltiverse
+          name: Build Docker image opencti/connector-maltiverse
+          command: docker build -t opencti/connector-maltiverse:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/intel471
+          name: Build Docker image opencti/connector-intel471
+          command: docker build -t opencti/connector-intel471:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/orange-cyberdefense
+          name: Build Docker image opencti/connector-orange-cyberdefense
+          command: docker build -t opencti/connector-orange-cyberdefense:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/citalid
+          name: Build Docker image opencti/connector-citalid
+          command: docker build -t opencti/connector-citalid:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/abuseipdb-ipblacklist
+          name: Build Docker image opencti/connector-abuseipdb-ipblacklist
+          command: docker build -t opencti/connector-abuseipdb-ipblacklist:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/misp-feed
+          name: Build Docker image opencti/connector-misp-feed
+          command: docker build -t opencti/connector-misp-feed:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/disarm-framework
+          name: Build Docker image opencti/connector-disarm-framework
+          command: docker build -t opencti/connector-disarm-framework:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/chapsvision
+          name: Build Docker image opencti/connector-chapsvision
+          command: docker build -t opencti/connector-chapsvision:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/abuse-ssl
+          name: Build Docker image opencti/connector-abuse-ssl
+          command: docker build -t opencti/connector-abuse-ssl:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/ironnet
+          name: Build Docker image opencti/connector-ironnet
+          command: docker build -t opencti/connector-ironnet:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/recorded-future
+          name: Build Docker image opencti/connector-recorded-future
+          command: docker build -t opencti/connector-recorded-future:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/opencsam
+          name: Build Docker image opencti/connector-opencsam
+          command: docker build -t opencti/connector-opencsam:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/joe-sandbox
+          name: Build Docker image opencti/connector-joe-sandbox
+          command: docker build -t opencti/connector-joe-sandbox:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/crits
+          name: Build Docker image opencti/connector-crits
+          command: docker build -t opencti/connector-crits:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/yara
+          name: Build Docker image opencti/connector-yara
+          command: docker build -t opencti/connector-yara:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/ipqs
+          name: Build Docker image opencti/connector-ipqs
+          command: docker build -t opencti/connector-ipqs:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/google-dns
+          name: Build Docker image opencti/connector-google-dns
+          command: docker build -t opencti/connector-google-dns:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/chronicle
+          name: Build Docker image opencti/connector-chronicle
+          command: docker build -t opencti/connector-chronicle:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/zerofox
+          name: Build Docker image opencti/connector-zerofox
+          command: docker build -t opencti/connector-zerofox:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/recordedfuture-enrichment
+          name: Build Docker image opencti/connector-recordedfuture-enrichment
+          command: docker build -t opencti/connector-recordedfuture-enrichment:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/lastinfosec
+          name: Build Docker image opencti/connector-lastinfosec-enrichment
+          command: docker build -t opencti/connector-lastinfosec-enrichment:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/stopforumspam
+          name: Build Docker image opencti/connector-stopforumspam
+          command: docker build -t opencti/connector-stopforumspam:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/phishunt
+          name: Build Docker image opencti/connector-phishunt
+          command: docker build -t opencti/connector-phishunt:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/cluster25
+          name: Build Docker image opencti/connector-cluster25
+          command: docker build -t opencti/connector-cluster25:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/ransomwarelive
+          name: Build Docker image opencti/connector-ransomwarelive
+          command: docker build -t opencti/connector-ransomwarelive:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/anyrun-feed
+          name: Build Docker image opencti/connector-anyrun-feed
+          command: docker build -t opencti/connector-anyrun-feed:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/anyrun-task
+          name: Build Docker image opencti/connector-anyrun-task
+          command: docker build -t opencti/connector-anyrun-task:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/greynoise-feed
+          name: Build Docker image opencti/connector-greynoise-feed
+          command: docker build -t opencti/connector-greynoise-feed:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/rst-noise-control
+          name: Build Docker image opencti/connector-rst-noise-control
+          command: docker build -t opencti/connector-rst-noise-control:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/red-flag-domains
+          name: Build Docker image opencti/connector-red-flag-domains
+          command: docker build -t opencti/connector-red-flag-domains:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/shadowserver
+          name: Build Docker image opencti/connector-shadowserver
+          command: docker build -t opencti/connector-shadowserver:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/reversinglabs-malware-presence
+          name: Build Docker image opencti/connector-reversinglabs-malware-presence
+          command: docker build -t opencti/connector-reversinglabs-malware-presence:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/jira
+          name: Build Docker image opencti/connector-jira
+          command: docker build -t opencti/connector-jira:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/reversinglabs-spectra-intel-submission
+          name: Build Docker image opencti/connector-reversinglabs-spectra-intel-submission
+          command: docker build -t opencti/connector-reversinglabs-spectra-intel-submission:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-import-file/import-file-misp
+          name: Build Docker image opencti/connector-import-file-misp
+          command: docker build -t opencti/connector-import-file-misp:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/tanium-incidents
+          name: Build Docker image opencti/connector-tanium-incidents
+          command: docker build -t opencti/connector-tanium-incidents:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/tanium-intel
+          name: Build Docker image opencti/connector-tanium-intel
+          command: docker build -t opencti/connector-tanium-intel:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/qradar
+          name: Build Docker image opencti/connector-qradar
+          command: docker build -t opencti/connector-qradar:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/stream-exporter
+          name: Build Docker image opencti/connector-stream-exporter
+          command: docker build -t opencti/connector-stream-exporter:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/stream-importer
+          name: Build Docker image opencti/connector-stream-importer
+          command: docker build -t opencti/connector-stream-importer:prerelease .
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push opencti/connector-sekoia:prerelease
+            docker push opencti/connector-hybrid-analysis-sandbox:prerelease
+            docker push opencti/connector-elastic:prerelease
+            docker push opencti/connector-vxvault:prerelease
+            docker push opencti/connector-shodan:prerelease
+            docker push opencti/connector-shodan-internetdb:prerelease
+            docker push opencti/connector-import-external-reference:prerelease
+            docker push opencti/connector-backup-files:prerelease
+            docker push opencti/connector-threatmatch:prerelease
+            docker push opencti/connector-restore-files:prerelease
+            docker push opencti/connector-virustotal-livehunt-notifications:prerelease
+            docker push opencti/connector-cape-sandbox:prerelease
+            docker push opencti/connector-domaintools:prerelease
+            docker push opencti/connector-intezer-sandbox:prerelease
+            docker push opencti/connector-hatching-triage-sandbox:prerelease
+            docker push opencti/connector-unpac-me:prerelease
+            docker push opencti/connector-ivre:prerelease
+            docker push opencti/connector-malwarebazaar-recent-additions:prerelease
+            docker push opencti/connector-urlhaus-recent-payloads:prerelease
+            docker push opencti/connector-export-report-pdf:prerelease
+            docker push opencti/connector-obstracts:prerelease
+            docker push opencti/connector-stixify:prerelease
+            docker push opencti/connector-vulmatch:prerelease
+            docker push opencti/connector-siemrules:prerelease
+            docker push opencti/connector-cisa-known-exploited-vulnerabilities:prerelease
+            docker push opencti/connector-cyber-campaign-collection:prerelease
+            docker push opencti/connector-socprime:prerelease
+            docker push opencti/connector-urlscan:prerelease
+            docker push opencti/connector-maltiverse:prerelease
+            docker push opencti/connector-intel471:prerelease
+            docker push opencti/connector-orange-cyberdefense:prerelease
+            docker push opencti/connector-citalid:prerelease
+            docker push opencti/connector-abuseipdb-ipblacklist:prerelease
+            docker push opencti/connector-misp-feed:prerelease
+            docker push opencti/connector-disarm-framework:prerelease
+            docker push opencti/connector-chapsvision:prerelease
+            docker push opencti/connector-abuse-ssl:prerelease
+            docker push opencti/connector-ironnet:prerelease
+            docker push opencti/connector-recorded-future:prerelease
+            docker push opencti/connector-opencsam:prerelease
+            docker push opencti/connector-joe-sandbox:prerelease
+            docker push opencti/connector-crits:prerelease
+            docker push opencti/connector-yara:prerelease
+            docker push opencti/connector-ipqs:prerelease
+            docker push opencti/connector-google-dns:prerelease
+            docker push opencti/connector-chronicle:prerelease
+            docker push opencti/connector-zerofox:prerelease
+            docker push opencti/connector-recordedfuture-enrichment:prerelease
+            docker push opencti/connector-lastinfosec-enrichment:prerelease
+            docker push opencti/connector-stopforumspam:prerelease
+            docker push opencti/connector-phishunt:prerelease
+            docker push opencti/connector-cluster25:prerelease
+            docker push opencti/connector-ransomwarelive:prerelease
+            docker push opencti/connector-anyrun-feed:prerelease
+            docker push opencti/connector-anyrun-task:prerelease
+            docker push opencti/connector-greynoise-feed:prerelease
+            docker push opencti/connector-rst-noise-control:prerelease
+            docker push opencti/connector-red-flag-domains:prerelease
+            docker push opencti/connector-shadowserver:prerelease
+            docker push opencti/connector-reversinglabs-malware-presence:prerelease
+            docker push opencti/connector-jira:prerelease
+            docker push opencti/connector-reversinglabs-spectra-intel-submission:prerelease
+            docker push opencti/connector-import-file-misp:prerelease
+            docker push opencti/connector-tanium-incidents:prerelease
+            docker push opencti/connector-tanium-intel:prerelease
+            docker push opencti/connector-qradar:prerelease
+            docker push opencti/connector-stream-exporter:prerelease
+            docker push opencti/connector-stream-importer:prerelease
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - ms-teams/report:
+          only_on_fail: true
+          webhook_url: $MS_TEAMS_WEBHOOK_URL
+  build_prerelease_3:
+    working_directory: ~/opencti
+    docker:
+      - image: cimg/base:stable-20.04
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: sudo apt-get update -qq && sudo apt install curl gettext-base
+      - run:
+          working_directory: ~/opencti
+          name: Replace pycti requirement of stable version with latest prerelease branch code
+          command: find . -name requirements.txt -exec sed 's|^pycti==.*$|pycti @ git+https://github.com/OpenCTI-Platform/client-python@$PRE_RELEASE_VERSION|' -i {} \;
+      - run:
+          working_directory: ~/opencti/stream/sentinel
+          name: Build Docker image opencti/connector-sentinel
+          command: docker build -t opencti/connector-sentinel:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/sentinel-incidents
+          name: Build Docker image opencti/connector-sentinel-incidents
+          command: docker build -t opencti/connector-sentinel-incidents:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/sentinel-intel
+          name: Build Docker image opencti/connector-sentinel-intel
+          command: docker build -t opencti/connector-sentinel-intel:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/harfanglab-incidents
+          name: Build Docker image opencti/connector-harfanglab-incidents
+          command: docker build -t opencti/connector-harfanglab-incidents:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/harfanglab-intel
+          name: Build Docker image opencti/connector-harfanglab-intel
+          command: docker build -t opencti/connector-harfanglab-intel:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/splunk
+          name: Build Docker image opencti/connector-splunk
+          command: docker build -t opencti/connector-splunk:prerelease .
+      - run:
+          working_directory: ~/opencti/internal-enrichment/riskiq-passive-total
+          name: Build Docker image opencti/connector-riskiq-passive-total
+          command: docker build -t opencti/connector-riskiq-passive-total:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/lia-file-feed
+          name: Build Docker image opencti/connector-lia-file-feed
+          command: docker build -t opencti/connector-lia-file-feed:prerelease .
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push opencti/connector-sentinel:prerelease
+            docker push opencti/connector-sentinel-incidents:prerelease
+            docker push opencti/connector-sentinel-intel:prerelease
+            docker push opencti/connector-harfanglab-incidents:prerelease
+            docker push opencti/connector-harfanglab-intel:prerelease
+            docker push opencti/connector-splunk:prerelease
+            docker push opencti/connector-riskiq-passive-total:prerelease
+            docker push opencti/connector-lia-file-feed:prerelease
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - ms-teams/report:
+          only_on_fail: true
+          webhook_url: $MS_TEAMS_WEBHOOK_URL
+  build_prerelease_4:
+    working_directory: ~/opencti
+    docker:
+      - image: cimg/base:stable-20.04
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: sudo apt-get update -qq && sudo apt install curl gettext-base
+      - run:
+          working_directory: ~/opencti
+          name: Replace pycti requirement of stable version with latest prerelease branch code
+          command: find . -name requirements.txt -exec sed 's|^pycti==.*$|pycti @ git+https://github.com/OpenCTI-Platform/client-python@$PRE_RELEASE_VERSION|' -i {} \;
+      - run:
+          working_directory: ~/opencti/stream/webhook
+          name: Build Docker image opencti/connector-webhook
+          command: docker build -t opencti/connector-webhook:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/harfanglab
+          name: Build Docker image opencti/connector-harfanglab
+          command: docker build -t opencti/connector-harfanglab:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/intel471_v2
+          name: Build Docker image opencti/connector-intel471_v2
+          command: docker build -t opencti/connector-intel471_v2:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/zvelo
+          name: Build Docker image opencti/connector-zvelo
+          command: docker build -t opencti/connector-zvelo:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/google-secops-siem
+          name: Build Docker image opencti/connector-google-secops-siem
+          command: docker build -t opencti/connector-google-secops-siem:prerelease .
+      - run:
+          working_directory: ~/opencti/stream/zscaler
+          name: Build Docker image opencti/connector-zscaler
+          command: docker build -t opencti/connector-zscaler:prerelease .
+      - run:
+          working_directory: ~/opencti/external-import/hunt-io
+          name: Build Docker image opencti/connector-hunt-io
+          command: docker build -t opencti/connector-hunt-io:prerelease .
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push opencti/connector-webhook:prerelease
+            docker push opencti/connector-harfanglab:prerelease
+            docker push opencti/connector-intel471_v2:prerelease
+            docker push opencti/connector-zvelo:prerelease
+            docker push opencti/connector-google-secops-siem:prerelease
+            docker push opencti/connector-zscaler:prerelease
+            docker push opencti/connector-hunt-io:prerelease
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - ms-teams/report:
+          only_on_fail: true
+          webhook_url: $MS_TEAMS_WEBHOOK_URL
   build_fips_rolling_1:
     working_directory: ~/opencti
     docker:
@@ -2220,6 +3103,42 @@ workflows:
             - build_rolling_3
             - build_rolling_4
             - build_fips_rolling_1
+      - build_prerelease_1:
+            requires:
+              - ensure_formatting
+              - base_linter
+              - linter
+            filters:
+              branches:
+                only:
+                  - master
+      - build_prerelease_2:
+          requires:
+            - ensure_formatting
+            - base_linter
+            - linter
+          filters:
+            branches:
+              only:
+                - master
+      - build_prerelease_3:
+          requires:
+            - ensure_formatting
+            - base_linter
+            - linter
+          filters:
+            branches:
+              only:
+                - master
+      - build_prerelease_4:
+          requires:
+            - ensure_formatting
+            - base_linter
+            - linter
+          filters:
+            branches:
+              only:
+                - master
       - notify:
           requires:
             - build_1
