@@ -85,11 +85,11 @@ class SentinelIncidentsConnector:
         else:
             self.helper.set_state({"last_incident_timestamp": incident_timestamp})
 
-    def _extract_intelligence(self, incident) -> list[object]:
+    def _extract_intelligence(self, incident: dict) -> list[object]:
         """
         Extract intelligence from incident and convert it to STIX 2.1 objects.
         :param incident: Incident to extract intelligence from
-        :return: STIX 2.1 objects:
+        :return: STIX 2.1 objects.
         """
         stix_objects = []
 
@@ -103,15 +103,16 @@ class SentinelIncidentsConnector:
                 stix_attack_pattern = (
                     self.converter_to_stix.create_mitre_attack_pattern(technique)
                 )
-                stix_objects.append(stix_attack_pattern)
-                stix_relationship_attack_pattern = (
-                    self.converter_to_stix.create_relationship(
-                        source_id=stix_incident.id,
-                        target_id=stix_attack_pattern.id,
-                        relationship_type="uses",
+                if stix_attack_pattern:
+                    stix_objects.append(stix_attack_pattern)
+                    stix_relationship_attack_pattern = (
+                        self.converter_to_stix.create_relationship(
+                            source_id=stix_incident.id,
+                            target_id=stix_attack_pattern.id,
+                            relationship_type="uses",
+                        )
                     )
-                )
-                stix_objects.append(stix_relationship_attack_pattern)
+                    stix_objects.append(stix_relationship_attack_pattern)
 
             # This mapping is used for the priority of evidences because ‘processEvidence’ often includes information
             # from ‘fileEvidence’ and ‘fileEvidence’ usually includes information from ‘fileHashEvidence’.
@@ -142,43 +143,46 @@ class SentinelIncidentsConnector:
                                 evidence
                             )
                         )
-                        stix_objects.append(stix_account)
-                        stix_relationship_account = (
-                            self.converter_to_stix.create_relationship(
-                                source_id=stix_account.id,
-                                target_id=stix_incident.id,
-                                relationship_type="related-to",
+                        if stix_account:
+                            stix_objects.append(stix_account)
+                            stix_relationship_account = (
+                                self.converter_to_stix.create_relationship(
+                                    source_id=stix_account.id,
+                                    target_id=stix_incident.id,
+                                    relationship_type="related-to",
+                                )
                             )
-                        )
-                        stix_objects.append(stix_relationship_account)
+                            stix_objects.append(stix_relationship_account)
 
                     # ipEvidence
                     case "#microsoft.graph.security.ipEvidence":
                         # Create Stix IPv4Address
                         stix_ip = self.converter_to_stix.create_evidence_ipv4(evidence)
-                        stix_objects.append(stix_ip)
-                        stix_relationship_ip = (
-                            self.converter_to_stix.create_relationship(
-                                source_id=stix_ip.id,
-                                target_id=stix_incident.id,
-                                relationship_type="related-to",
+                        if stix_ip:
+                            stix_objects.append(stix_ip)
+                            stix_relationship_ip = (
+                                self.converter_to_stix.create_relationship(
+                                    source_id=stix_ip.id,
+                                    target_id=stix_incident.id,
+                                    relationship_type="related-to",
+                                )
                             )
-                        )
-                        stix_objects.append(stix_relationship_ip)
+                            stix_objects.append(stix_relationship_ip)
 
                     # urlEvidence
                     case "#microsoft.graph.security.urlEvidence":
                         # Create Stix Url
                         stix_url = self.converter_to_stix.create_evidence_url(evidence)
-                        stix_objects.append(stix_url)
-                        stix_relationship_url = (
-                            self.converter_to_stix.create_relationship(
-                                source_id=stix_url.id,
-                                target_id=stix_incident.id,
-                                relationship_type="related-to",
+                        if stix_url:
+                            stix_objects.append(stix_url)
+                            stix_relationship_url = (
+                                self.converter_to_stix.create_relationship(
+                                    source_id=stix_url.id,
+                                    target_id=stix_incident.id,
+                                    relationship_type="related-to",
+                                )
                             )
-                        )
-                        stix_objects.append(stix_relationship_url)
+                            stix_objects.append(stix_relationship_url)
 
                     # deviceEvidence
                     case "#microsoft.graph.security.deviceEvidence":
@@ -186,15 +190,16 @@ class SentinelIncidentsConnector:
                         stix_hostname = self.converter_to_stix.create_evidence_custom_observable_hostname(
                             evidence
                         )
-                        stix_objects.append(stix_hostname)
-                        stix_relationship_hostname = (
-                            self.converter_to_stix.create_relationship(
-                                source_id=stix_hostname.id,
-                                target_id=stix_incident.id,
-                                relationship_type="related-to",
+                        if stix_hostname:
+                            stix_objects.append(stix_hostname)
+                            stix_relationship_hostname = (
+                                self.converter_to_stix.create_relationship(
+                                    source_id=stix_hostname.id,
+                                    target_id=stix_incident.id,
+                                    relationship_type="related-to",
+                                )
                             )
-                        )
-                        stix_objects.append(stix_relationship_hostname)
+                            stix_objects.append(stix_relationship_hostname)
 
                     # processEvidence, fileEvidence and fileHashEvidence
                     case evidence_file if (
@@ -226,18 +231,17 @@ class SentinelIncidentsConnector:
                                 )
                             )
                             stix_objects.append(stix_relationship_file)
-                            if stix_directory:
-                                # Add Stix Directory in stix_objects and relationship with incident
-                                stix_objects.append(stix_directory)
-                                stix_relationship_directory = (
-                                    self.converter_to_stix.create_relationship(
-                                        source_id=stix_directory.id,
-                                        target_id=stix_incident.id,
-                                        relationship_type="related-to",
-                                    )
+                        if stix_directory and stix_file:
+                            # Add Stix Directory in stix_objects and relationship with incident
+                            stix_objects.append(stix_directory)
+                            stix_relationship_directory = (
+                                self.converter_to_stix.create_relationship(
+                                    source_id=stix_directory.id,
+                                    target_id=stix_incident.id,
+                                    relationship_type="related-to",
                                 )
-                                stix_objects.append(stix_relationship_directory)
-
+                            )
+                            stix_objects.append(stix_relationship_directory)
                         else:
                             self.helper.connector_logger.debug(
                                 "The creation of the stix file will be ignored as it already exists "
@@ -266,24 +270,22 @@ class SentinelIncidentsConnector:
                         stix_malware = self.converter_to_stix.create_evidence_malware(
                             evidence, stix_files_objects
                         )
-                        stix_objects.append(stix_malware)
-
-                        stix_relationship_malware = (
-                            self.converter_to_stix.create_relationship(
-                                source_id=stix_malware.id,
-                                target_id=stix_incident.id,
-                                relationship_type="related-to",
+                        if stix_malware:
+                            stix_objects.append(stix_malware)
+                            stix_relationship_malware = (
+                                self.converter_to_stix.create_relationship(
+                                    source_id=stix_malware.id,
+                                    target_id=stix_incident.id,
+                                    relationship_type="related-to",
+                                )
                             )
-                        )
-                        stix_objects.append(stix_relationship_malware)
+                            stix_objects.append(stix_relationship_malware)
 
         stix_case = self.converter_to_stix.create_custom_case_incident(
             incident, stix_objects
         )
         stix_objects.append(stix_case)
 
-        # TLP marking added to stix_objects
-        stix_objects.append(self.tlp_marking)
         return stix_objects
 
     def process_message(self):
@@ -301,7 +303,7 @@ class SentinelIncidentsConnector:
             if last_incident_timestamp:
                 self.helper.connector_logger.info(
                     "[CONNECTOR] Connector last imported incident timestamp:",
-                    {"last_incident_datetime": last_incident_timestamp},
+                    {"last_incident_timestamp": last_incident_timestamp},
                 )
             else:
                 self.helper.connector_logger.info(
@@ -318,29 +320,41 @@ class SentinelIncidentsConnector:
                 {"connector_name": self.helper.connect_name},
             )
 
+            # A token is valid for 1 hour so we get a fresh one on every run
+            self.client.set_oauth_token()
+
+            stix_objects = []
+
             incidents = self.client.get_incidents(last_incident_timestamp)
             # Incidents are listed from oldest to most recent.
             for incident in reversed(incidents):
                 incident = format_incident(incident)
                 if validate_incident(incident, last_incident_timestamp):
-                    stix_objects = self._extract_intelligence(incident)
-                    if stix_objects:
-                        stix_bundle = self.helper.stix2_create_bundle(stix_objects)
+                    incident_stix_objects = self._extract_intelligence(incident)
+                    stix_objects.extend(incident_stix_objects)
 
-                        self.helper.send_stix2_bundle(
-                            stix_bundle,
-                            work_id=work_id,
-                            cleanup_inconsistent_bundle=True,
-                        )
+                    last_incident_timestamp = incident["lastUpdateDateTime"]
 
-                        self._set_last_incident_date(incident["lastUpdateDateTime"])
+            if stix_objects:
+                # Add author and default TLP marking for consistent bundle
+                stix_objects.append(self.converter_to_stix.author)
+                stix_objects.append(self.tlp_marking)
 
-                        message = (
-                            f"{self.helper.connect_name} connector successfully run, storing last_incident_timestamp as "
-                            + str(incident["lastUpdateDateTime"])
-                        )
-                        self.helper.api.work.to_processed(work_id, message)
-                        self.helper.connector_logger.info(message)
+                stix_bundle = self.helper.stix2_create_bundle(stix_objects)
+                self.helper.send_stix2_bundle(
+                    stix_bundle,
+                    work_id=work_id,
+                    cleanup_inconsistent_bundle=True,
+                )
+
+                self._set_last_incident_date(last_incident_timestamp)
+
+            message = (
+                f"{self.helper.connect_name} connector successfully run, storing last_incident_timestamp as "
+                + str(last_incident_timestamp)
+            )
+            self.helper.api.work.to_processed(work_id, message)
+            self.helper.connector_logger.info(message)
         except (KeyboardInterrupt, SystemExit):
             self.helper.connector_logger.info(
                 "[CONNECTOR] Connector stopped...",

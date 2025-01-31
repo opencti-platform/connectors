@@ -1,4 +1,5 @@
 import stix2
+import stix2.exceptions
 from pycti import (
     AttackPattern,
     CaseIncident,
@@ -11,6 +12,24 @@ from pycti import (
 )
 
 from .utils import CASE_INCIDENT_PRIORITIES, format_datetime, is_ipv4
+
+
+def handle_stix2_error(decorated_function):
+    """
+    Decorate ConverterToStix instance method to handle STIX 2.1 exceptions.
+    In case of an exception, log the error and return None.
+    :param decorated_function: Method to decorate
+    :return: Decorated method
+    """
+
+    def decorator(self, *args, **kwargs):
+        try:
+            return decorated_function(self, *args, **kwargs)
+        except stix2.exceptions.STIXError as e:
+            self.helper.connector_logger.error(str(e))
+            return None
+
+    return decorator
 
 
 class ConverterToStix:
@@ -28,7 +47,7 @@ class ConverterToStix:
         self.author = self.create_author_identity(
             name=helper.connect_name,
             identity_class="organization",
-            description="Import Indicents according to alerts found in Microsoft Sentinel",
+            description="Import incidents according to alerts found in Microsoft Sentinel",
         )
         self.all_hashes = set()
 
@@ -51,24 +70,25 @@ class ConverterToStix:
         )
         return author
 
-    def create_incident(self, alert) -> stix2.Incident:
-
-        alert_created = format_datetime(alert.get("createdDateTime"))
-        alert_modified = format_datetime(alert.get("lastUpdateDateTime"))
-
-        description = (
+    @handle_stix2_error
+    def create_incident(self, alert: dict) -> stix2.Incident | None:
+        incident_name = alert.get("title")
+        incident_created_at = format_datetime(alert.get("createdDateTime"))
+        incident_modified_at = format_datetime(alert.get("lastUpdateDateTime"))
+        incident_labels = [alert.get("category")] if alert.get("category") else None
+        incident_description = (
             alert.get("description", "")
             + "\n\nRecommanded Actions:\n\n"
             + alert.get("recommendedActions", "")
         )
 
         stix_incident = stix2.Incident(
-            id=Incident.generate_id(alert["title"], alert_created),
-            created=alert_created,
-            modified=alert_modified,
-            name=alert["title"],
-            labels=[alert.get("category")] if alert.get("category") else None,
-            description=description,
+            id=Incident.generate_id(incident_name, incident_created_at),
+            created=incident_created_at,
+            modified=incident_modified_at,
+            name=incident_name,
+            labels=incident_labels,
+            description=incident_description,
             object_marking_refs=[self.tlp_marking],
             created_by_ref=self.author["id"],
             external_references=[
@@ -88,36 +108,41 @@ class ConverterToStix:
         )
         return stix_incident
 
+    @handle_stix2_error
     def create_custom_case_incident(
         self, incident: dict, bundle_objects: list[object]
-    ) -> CustomObjectCaseIncident:
+    ) -> CustomObjectCaseIncident | None:
         """
         Create STIX 2.1 Custom Case Incident object
         :param incident: Incident to create Case Incident from
         :param bundle_objects: List of all the STIX 2.1 objects refering to the incident
         :return: Case Incident in STIX 2.1 format
         """
-        incident_date = format_datetime(incident.get("createdDateTime"))
-
-        stix_case = CustomObjectCaseIncident(
-            id=CaseIncident.generate_id(incident["displayName"], incident_date),
-            name=incident["displayName"],
-            description="Incident from "
+        case_incident_name = incident.get("displayName")
+        case_incident_created_at = format_datetime(incident.get("createdDateTime"))
+        case_incident_description = (
+            "Incident from "
             + self.config.target_product.replace("Azure", "Microsoft")
             + " | classification: "
-            + incident["classification"]
+            + incident.get("classification", "")
             + " | determination: "
-            + incident["determination"],
-            severity=incident["severity"],
-            priority=CASE_INCIDENT_PRIORITIES[incident["severity"]],
-            created=incident_date,
+            + incident.get("determination", "")
+        )
+
+        stix_case = CustomObjectCaseIncident(
+            id=CaseIncident.generate_id(case_incident_name, case_incident_created_at),
+            name=case_incident_name,
+            description=case_incident_description,
+            severity=incident.get("severity"),
+            priority=CASE_INCIDENT_PRIORITIES[incident.get("severity")],
+            created=case_incident_created_at,
             external_references=[
                 {
                     "source_name": self.config.target_product.replace(
                         "Azure", "Microsoft"
                     ),
-                    "external_id": incident["id"],
-                    "url": incident["incidentWebUrl"],
+                    "external_id": incident.get("id"),
+                    "url": incident.get("incidentWebUrl"),
                 }
             ],
             created_by_ref=self.author["id"],
@@ -126,15 +151,24 @@ class ConverterToStix:
         )
         return stix_case
 
-    def create_evidence_user_account(self, evidence: dict) -> stix2.UserAccount:
+    @handle_stix2_error
+    def create_evidence_user_account(self, evidence: dict) -> stix2.UserAccount | None:
         """
         Create STIX 2.1 User Account object
         :param evidence: Evidence to create User Account from
         :return: User Account in STIX 2.1 format
         """
+        user_account_dict = evidence.get("userAccount")
+        if not isinstance(user_account_dict, dict):
+            self.helper.connector_logger.error(
+                "This evidence does not contain user account's details: ",
+                {"evidence": evidence},
+            )
+            return None
+
         user_account = stix2.UserAccount(
-            account_login=evidence["userAccount"]["accountName"],
-            display_name=evidence["userAccount"]["displayName"],
+            account_login=user_account_dict.get("accountName"),
+            display_name=user_account_dict.get("displayName"),
             object_marking_refs=[self.tlp_marking],
             custom_properties={
                 "created_by_ref": self.author["id"],
@@ -142,18 +176,20 @@ class ConverterToStix:
         )
         return user_account
 
-    def create_evidence_ipv4(self, evidence: dict) -> stix2.IPv4Address:
+    @handle_stix2_error
+    def create_evidence_ipv4(self, evidence: dict) -> stix2.IPv4Address | None:
         """
         Create STIX 2.1 IPv4 Address object
         :param evidence: Evidence to create IPv4 from
         :return: IPv4 Address in STIX 2.1 format
         """
-        ip_address = evidence["ipAddress"]
+        ip_address = evidence.get("ipAddress")
         if not is_ipv4(ip_address):
             self.helper.connector_logger.error(
                 "This observable value is not a valid IPv4 address: ",
                 {"value": ip_address},
             )
+            return None
 
         ipv4 = stix2.IPv4Address(
             value=ip_address,
@@ -164,14 +200,15 @@ class ConverterToStix:
         )
         return ipv4
 
-    def create_evidence_url(self, evidence: dict) -> stix2.URL:
+    @handle_stix2_error
+    def create_evidence_url(self, evidence: dict) -> stix2.URL | None:
         """
         Create STIX 2.1 User Account object
         :param evidence: Evidence to create User Account from
         :return: User Account in STIX 2.1 format
         """
         stix_url = stix2.URL(
-            value=evidence["url"],
+            value=evidence.get("url"),
             object_marking_refs=[self.tlp_marking],
             custom_properties={
                 "created_by_ref": self.author["id"],
@@ -179,6 +216,7 @@ class ConverterToStix:
         )
         return stix_url
 
+    @handle_stix2_error
     def create_evidence_file(
         self, evidence: dict, stix_directory: stix2.Directory
     ) -> stix2.File | None:
@@ -237,16 +275,17 @@ class ConverterToStix:
         else:
             return None
 
+    @handle_stix2_error
     def create_evidence_custom_observable_hostname(
         self, evidence: dict
-    ) -> CustomObservableHostname:
+    ) -> CustomObservableHostname | None:
         """
         Create STIX 2.1 Custom Observable Hostname object
         :param evidence: Evidence to create Observable Hostname from
         :return: Observable Hostname in STIX 2.1 format
         """
         stix_hostname = CustomObservableHostname(
-            value=evidence["deviceDnsName"],
+            value=evidence.get("deviceDnsName"),
             object_marking_refs=[self.tlp_marking],
             custom_properties={
                 "created_by_ref": self.author["id"],
@@ -254,7 +293,8 @@ class ConverterToStix:
         )
         return stix_hostname
 
-    def create_mitre_attack_pattern(self, technique: str) -> stix2.AttackPattern:
+    @handle_stix2_error
+    def create_mitre_attack_pattern(self, technique: str) -> stix2.AttackPattern | None:
         """
         Create STIX 2.1 Attack Pattern object
         :param technique: Mitre Attack Pattern name
@@ -263,7 +303,6 @@ class ConverterToStix:
         stix_attack_pattern = stix2.AttackPattern(
             id=AttackPattern.generate_id(technique, technique),
             name=technique,
-            allow_custom=True,
             object_marking_refs=[self.tlp_marking],
             custom_properties={
                 "x_mitre_id": technique,
@@ -272,9 +311,10 @@ class ConverterToStix:
         )
         return stix_attack_pattern
 
+    @handle_stix2_error
     def create_evidence_malware(
         self, evidence: dict, sample_refs: list
-    ) -> stix2.Malware:
+    ) -> stix2.Malware | None:
         """
         Create a STIX 2.1 Malware object based on the provided evidence.
         Evidence type: malwareEvidence
@@ -284,7 +324,6 @@ class ConverterToStix:
         :param evidence: A dictionary containing evidence related to the malware.
         :return: A STIX 2.1 Malware object representing the malware described in the evidence.
         """
-
         malware_name = evidence.get("name")
         malware_created = format_datetime(evidence.get("createdDateTime"))
 
@@ -302,7 +341,8 @@ class ConverterToStix:
         )
         return stix_malware
 
-    def create_evidence_directory(self, evidence: dict) -> stix2.Directory:
+    @handle_stix2_error
+    def create_evidence_directory(self, evidence: dict) -> stix2.Directory | None:
         """
         Create a STIX 2.1 Directory object based on the provided evidence.
         Evidence type: processEvidence, fileEvidence and malwareEvidence
@@ -310,8 +350,13 @@ class ConverterToStix:
         :param evidence: A dictionary containing evidence related to the directory.
         :return: A STIX 2.1 Directory object representing the directory described in the evidence.
         """
+        # ! Sometimes Sentinel returns an empty string for the file path but stix2 lib doesn't check strings length
+        file_path = evidence.get("filePath")
+        if not file_path:
+            return None
+
         stix_directory = stix2.Directory(
-            path=evidence.get("filePath"),
+            path=file_path,
             object_marking_refs=[self.tlp_marking],
             custom_properties={
                 "created_by_ref": self.author["id"],
@@ -319,9 +364,10 @@ class ConverterToStix:
         )
         return stix_directory
 
+    @handle_stix2_error
     def create_relationship(
         self, source_id=None, target_id=None, relationship_type=None
-    ) -> stix2.Relationship:
+    ) -> stix2.Relationship | None:
         """
         Creates Relationship object
         :param source_id: ID of source in string
