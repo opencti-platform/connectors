@@ -4,7 +4,7 @@ datefinder==0.7.3
 idna==3.10
 pycti==6.4.10
 python-dateutil==2.9.0.post0
-pytz==2024.2
+pytz==2025.1
 regex==2024.11.6
 simplejson==3.19.3
 six==1.17.0
