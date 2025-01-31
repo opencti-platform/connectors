@@ -1,0 +1,16 @@
+opencti:
+  url: 'http://localhost:8080'
+  token: 'ChangeMe'
+
+connector:
+  id: 'ChangeMe'
+  type: 'INTERNAL_IMPORT_FILE'
+  name: 'ImportFileYara'
+  validate_before_import: true # Validate any bundle before import
+  scope: 'text/yara+plain'
+  auto: false # Enable/disable auto-import of file
+  confidence_level: 15 # From 0 (Unknown) to 100 (Fully trusted)
+  log_level: 'info'
+
+yara_import_file:
+  split_rules: true
