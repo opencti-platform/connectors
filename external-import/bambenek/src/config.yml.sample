@@ -1,0 +1,27 @@
+opencti:
+  url: 'http://localhost:PORT'
+  token: 'ChangeMe'
+
+connector:
+  id: 'ChangeMe'
+  type: 'EXTERNAL_IMPORT'
+  name: 'Bambenek CTI'
+  scope: 'ipv4-addr,ipv6-addr,domain,url,indicator'
+  log_level: 'info'
+  duration_period: 'PT1H' # Interval given for scheduler process in ISO-8601 format
+  #============================================#
+  # Optional connector's definition parameters #
+  #============================================#
+  #queue_threshold: 500
+  #run_and_terminate: 'False'
+  #send_to_queue: 'True'
+  #send_to_directory: 'False'
+  #send_to_directory_path: 'ChangeMe'
+  #send_to_directory_retention: 7
+
+bambenek:
+  username: 'ChangeMe'
+  password: 'ChangeMe'
+  collections: 'c2_dga,c2_dga_high_conf,c2_domain,c2_domain_highconf,c2_ip,c2_ip_highconf'
+  # possible collections values are: c2_dga, c2_dga_high_conf, c2_domain, c2_domain_highconf,
+  # c2_ip, c2_ip_highconf, c2_masterlist, sinkhole
