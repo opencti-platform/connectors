@@ -22,6 +22,7 @@ from proofpoint_tap.errors import (
     ProofpointAPIInvalidResponseError,
     ProofPointAPIRequestParamsError,
 )
+from pydantic import SecretStr
 from yarl import URL
 
 
@@ -45,8 +46,8 @@ def campaign_client_instance() -> "CampaignClient":
     """Return a mock CampaignClient instance."""
     client = CampaignClient(
         base_url=URL("http://example.com"),
-        principal="principal",
-        secret="*****",  # noqa: S106  # we indeed harcode a secret here...
+        principal=SecretStr("principal"),
+        secret=SecretStr("*****"),  # noqa: S106  # we indeed harcode a secret here...
         timeout=timedelta(seconds=1),
         retry=1,
         backoff=timedelta(seconds=1),

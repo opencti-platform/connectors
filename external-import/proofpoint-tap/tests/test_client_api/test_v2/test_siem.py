@@ -21,6 +21,7 @@ from proofpoint_tap.errors import (
     ProofpointAPIInvalidResponseError,
     ProofPointAPIRequestParamsError,
 )
+from pydantic import SecretStr
 from yarl import URL
 
 
@@ -44,8 +45,8 @@ def client_instance() -> SIEMClient:
     """Return a mock Client instance."""
     client = SIEMClient(
         base_url=URL("http://example.com"),
-        principal="principal",
-        secret="*****",  # noqa: S106  # we indeed harcode a secret here...
+        principal=SecretStr("principal"),
+        secret=SecretStr("*****"),  # noqa: S106  # we indeed harcode a secret here...
         timeout=timedelta(seconds=1),
         retry=1,
         backoff=timedelta(seconds=1),
@@ -130,8 +131,8 @@ async def test_success_cases(client_instance: SIEMClient, method_name: str) -> N
     # When calling the public method
     public_method = getattr(client_instance, method_name)
     response = await public_method(
-        start_time=datetime.now(timezone.utc) - timedelta(hours=48),
-        end_time=datetime.now(timezone.utc) - timedelta(hours=47),
+        start_time=datetime.now(timezone.utc) - timedelta(minutes=60),
+        end_time=datetime.now(timezone.utc) - timedelta(minutes=30),
     )
     # Then the response should be a SIEMResponse instance
     assert isinstance(  # noqa: S101 # We indeed call assert in unit tests.
@@ -173,8 +174,8 @@ async def test_response_errors(
     # Then a ProofPointAPIError should be raised
     with pytest.raises(ProofpointAPIError):
         _ = await client_instance.fetch_all(
-            start_time=datetime.now(timezone.utc) - timedelta(hours=48),
-            end_time=datetime.now(timezone.utc) - timedelta(hours=47),
+            start_time=datetime.now(timezone.utc) - timedelta(minutes=60),
+            end_time=datetime.now(timezone.utc) - timedelta(minutes=30),
         )
 
 
@@ -193,6 +194,6 @@ async def test_model_responses(client_instance: SIEMClient, method_name: str) ->
     # Then a ProofpointAPIInvalidResponseError should be raised
     with pytest.raises(ProofpointAPIInvalidResponseError):
         _ = await getattr(client_instance, method_name)(
-            start_time=datetime.now(timezone.utc) - timedelta(hours=48),
-            end_time=datetime.now(timezone.utc) - timedelta(hours=47),
+            start_time=datetime.now(timezone.utc) - timedelta(minutes=60),
+            end_time=datetime.now(timezone.utc) - timedelta(minutes=30),
         )

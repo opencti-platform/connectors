@@ -14,6 +14,7 @@ import pytest
 from aiohttp import ClientResponse, ClientResponseError
 from proofpoint_tap.client_api.v2.threat import ThreatClient, ThreatSummary
 from proofpoint_tap.errors import ProofpointAPIError, ProofpointAPIInvalidResponseError
+from pydantic import SecretStr
 from yarl import URL
 
 
@@ -37,8 +38,8 @@ def client_instance() -> ThreatClient:
     """Return a mock Client instance."""
     client = ThreatClient(
         base_url=URL("http://example.com"),
-        principal="principal",
-        secret="*****",  # noqa: S106  # we indeed harcode a secret here...
+        principal=SecretStr("principal"),
+        secret=SecretStr("*****"),  # noqa: S106  # we indeed harcode a secret here...
         timeout=timedelta(seconds=1),
         retry=1,
         backoff=timedelta(seconds=1),

@@ -1,12 +1,16 @@
 """Offer python errors and tools."""
 
 
-class ProofpointAPIError(Exception):
-    """Generic Proofpoint API error."""
+class DataRetrievalError(Exception):
+    """Generic error for data retrieval."""
 
 
-class ProofPointAPIRequestParamsError(ProofpointAPIError):
+class ProofPointAPIRequestParamsError(Exception):
     """Proofpoint API error with request parameters."""
+
+
+class ProofpointAPIError(DataRetrievalError):
+    """Generic Proofpoint API error."""
 
 
 class ProofpointAPI404Error(ProofpointAPIError):
@@ -32,3 +36,7 @@ class ProofpointAPI429Error(ProofpointAPIError):
 
 class ProofpointAPIInvalidResponseError(ProofpointAPIError):
     """Proofpoint API error with an invalid response."""
+
+
+class ConfigLoaderError(Exception):
+    """Generic error for the config loader."""

@@ -1,8 +1,8 @@
+# pragma: no cover # do not include tests modules in coverage metrics
 """Test the ingest report use case."""
 
 from datetime import datetime, timezone
 
-from proofpoint_tap.domain.models.octi import TLPMarking
 from proofpoint_tap.domain.use_cases.ingest_report import ReportProcessor
 from proofpoint_tap.ports.campaign import CampaignPort, ObservedDataPort
 from stix2.v21.base import _STIXBase21
@@ -127,7 +127,7 @@ def test_ingest_campaign_use_case_success():
         targeted_brand_names=["brand1", "brand2"],
     )
     # When running the report processor on the campaign
-    processor = ReportProcessor(tlp_marking=TLPMarking(level="white"))
+    processor = ReportProcessor(tlp_marking_name="white")
     entities = processor.run_on(campaign)
 
     # Then expected generated entities should be returned and stix serializable
@@ -193,6 +193,78 @@ def test_ingest_campaign_use_case_success():
         )
         == 1  # noqa: S101
     )
+    # 4 - IntrusionSetUsesMalwareRelationship
+    assert (  # noqa: S101
+        len(
+            [
+                entity
+                for entity in entities
+                if entity.__class__.__name__ == "IntrusionSetUsesMalware"
+            ]
+        )
+        == 4
+    )
+    # - 4 IntrusionSetUsesAttackPattern relationships
+    assert (  # noqa: S101
+        len(
+            [
+                entity
+                for entity in entities
+                if entity.__class__.__name__ == "IntrusionSetUsesAttackPattern"
+            ]
+        )
+        == 4
+    )
+
+    # - 2 IndicatorIndicatesMalware relationships
+    assert (  # noqa: S101
+        len(
+            [
+                entity
+                for entity in entities
+                if entity.__class__.__name__ == "IndicatorIndicatesMalware"
+            ]
+        )
+        == 2
+    )
+
+    # - 2 IndicatorIndicatesIntrusionSet relationships
+    assert (  # noqa: S101
+        len(
+            [
+                entity
+                for entity in entities
+                if entity.__class__.__name__ == "IndicatorIndicatesIntrusionSet"
+            ]
+        )
+        == 2
+    )
+
+    # - 4 IntrusionSetTargetsOrganization relationships
+    assert (  # noqa: S101
+        len(
+            [
+                entity
+                for entity in entities
+                if entity.__class__.__name__ == "IntrusionSetTargetsOrganization"
+            ]
+        )
+        == 4
+    )
+    # - 1 Indicator Based on Observable relationships (only URL handled for now)
+    assert (  # noqa: S101
+        len(
+            [
+                entity
+                for entity in entities
+                if entity.__class__.__name__ == "IndicatorBasedOnObservable"
+            ]
+        )
+        == 1
+    )
+
+    # 29 entities total
+    assert len(entities) == 29  # noqa: S101
     # all stix2 lib object
     assert all(  # noqa: S101
         isinstance(entity.to_stix2_object(), _STIXBase21) for entity in entities

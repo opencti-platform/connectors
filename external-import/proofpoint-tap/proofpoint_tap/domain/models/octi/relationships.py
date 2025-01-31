@@ -1,32 +1,38 @@
 """Define the OpenCTI Relationships."""
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import Any, Literal, Optional
 
 import pycti  # type: ignore[import-untyped]  # pycti does not provide stubs
 import stix2  # type: ignore[import-untyped] # stix2 does not provide stubs
-from proofpoint_tap.domain.models.octi.common import BaseEntity
+
+# Note: We need to import the models (even if used for typing purpose) for pydantic to work.
+# Else we get a pydantic.errors.PydanticUserError: `Model` is not fully defined.
+from proofpoint_tap.domain.models.octi.common import (
+    Author,
+    BaseEntity,
+    ExternalReference,
+    TLPMarking,
+)
+from proofpoint_tap.domain.models.octi.domain import (
+    AttackPattern,
+    Campaign,
+    Incident,
+    IntrusionSet,
+    Malware,
+    TargetedOrganization,
+)
+from proofpoint_tap.domain.models.octi.observables import (
+    EmailAddress,
+    EmailMessage,
+    Indicator,
+    Observable,
+)
 from pydantic import Field, PrivateAttr
-
-if TYPE_CHECKING:
-
-    from proofpoint_tap.domain.models.octi.common import (
-        Author,
-        ExternalReference,
-        TLPMarking,
-    )
-    from proofpoint_tap.domain.models.octi.domain import (
-        AttackPattern,
-        Campaign,
-        IntrusionSet,
-        Malware,
-        TargetedOrganization,
-    )
-    from proofpoint_tap.domain.models.octi.observables import Indicator
 
 
 class BaseRelationship(BaseEntity):
-    """Represents a Base relationship."""
+    """Represent a Base relationship."""
 
     author: "Author" = Field(
         ..., description="Reference to the author that reported this relationship."
@@ -64,7 +70,7 @@ class BaseRelationship(BaseEntity):
         description="External references",
     )
 
-    _relationship_type: str = PrivateAttr(...)
+    _relationship_type: str = PrivateAttr("")
 
     def to_stix2_object(self) -> stix2.v21.Relationship:
         """Make stix object."""
@@ -93,17 +99,15 @@ class BaseRelationship(BaseEntity):
             start_time=self.start_time,
             stop_time=self.stop_time,
             confidence=self.confidence,
-            object_marking_refs=self.markings,
+            object_marking_refs=[marking.id for marking in self.markings or []],
             external_references=(
-                [ref.to_stix2_object() for ref in self.external_references]
-                if self.external_references
-                else None
+                [ref.to_stix2_object() for ref in self.external_references or []]
             ),
         )
 
 
 class CampaignAttributedToIntrusionSet(BaseRelationship):
-    """Represents a relationship indicating that a campaign is attributed to an intrusion-set.
+    """Represent a relationship indicating that a campaign is attributed to an intrusion-set.
 
     Examples:
         >>> campaign = Campaign(name="Campaign 1", description="Campaign description")
@@ -130,7 +134,7 @@ class CampaignAttributedToIntrusionSet(BaseRelationship):
 
 
 class CampaignUsesMalware(BaseRelationship):
-    """Represents a relationship indicating that a campaign uses a malware."""
+    """Represent a relationship indicating that a campaign uses a malware."""
 
     # Override BaseRelationship
     source: "Campaign" = Field(
@@ -145,7 +149,7 @@ class CampaignUsesMalware(BaseRelationship):
 
 
 class CampaignUsesAttackPattern(BaseRelationship):
-    """Represents a relationship indicating that a campaign uses an attack pattern."""
+    """Represent a relationship indicating that a campaign uses an attack pattern."""
 
     # Override BaseRelationship
     source: "Campaign" = Field(
@@ -160,7 +164,7 @@ class CampaignUsesAttackPattern(BaseRelationship):
 
 
 class CampaignTargetsOrganization(BaseRelationship):
-    """Represents a relationship indicating that a campaign targets an organization."""
+    """Represent a relationship indicating that a campaign targets an organization."""
 
     # Override BaseRelationship
     source: "Campaign" = Field(
@@ -174,8 +178,8 @@ class CampaignTargetsOrganization(BaseRelationship):
     _relationship_type: Literal["targets"] = "targets"
 
 
-class IntrusionSetTargetsOrganizations(BaseRelationship):
-    """Represents a relationship indicating that an intrusion set targets organizations."""
+class IntrusionSetTargetsOrganization(BaseRelationship):
+    """Represent a relationship indicating that an intrusion set targets organization."""
 
     # Override BaseRelationship
     source: "IntrusionSet" = Field(
@@ -190,7 +194,7 @@ class IntrusionSetTargetsOrganizations(BaseRelationship):
 
 
 class IntrusionSetUsesMalware(BaseRelationship):
-    """Represents a relationship indicating that an intrusion set uses a malware."""
+    """Represent a relationship indicating that an intrusion set uses a malware."""
 
     # Override BaseRelationship
     source: "IntrusionSet" = Field(
@@ -205,7 +209,7 @@ class IntrusionSetUsesMalware(BaseRelationship):
 
 
 class IntrusionSetUsesAttackPattern(BaseRelationship):
-    """Represents a relationship indicating that an intrusion set uses an attack pattern."""
+    """Represent a relationship indicating that an intrusion set uses an attack pattern."""
 
     # Override BaseRelationship
     source: "IntrusionSet" = Field(
@@ -220,7 +224,7 @@ class IntrusionSetUsesAttackPattern(BaseRelationship):
 
 
 class IndicatorIndicatesMalware(BaseRelationship):
-    """Represents a relationship indicating that an indicator indicates a malware."""
+    """Represent a relationship indicating that an indicator indicates a malware."""
 
     # Override BaseRelationship
     source: "Indicator" = Field(
@@ -235,7 +239,7 @@ class IndicatorIndicatesMalware(BaseRelationship):
 
 
 class IndicatorIndicatesIntrusionSet(BaseRelationship):
-    """Represents a relationship indicating that an indicator indicates an intrusion set."""
+    """Represent a relationship indicating that an indicator indicates an intrusion set."""
 
     # Override BaseRelationship
     source: "Indicator" = Field(
@@ -247,3 +251,45 @@ class IndicatorIndicatesIntrusionSet(BaseRelationship):
         description="Reference to the target entity of the relationship. Here an IntrusionSet.",
     )
     _relationship_type: Literal["indicates"] = "indicates"
+
+
+class IndicatorBasedOnObservable(BaseRelationship):
+    """Represent a relationship indicating that an indicator is based on an observable."""
+
+    source: "Indicator" = Field(
+        ...,
+        description="Reference to the source entity of the relationship. Here an Indicator.",
+    )
+    target: "Observable" = Field(
+        ...,
+        description="Reference to the target entity of the relationship. Here an Indicator.",
+    )
+    _relationship_type: Literal["based-on"] = "based-on"
+
+
+class EmailAddressRelatedToIncident(BaseRelationship):
+    """Represent a relationship indicating that an email address is related to incidents."""
+
+    source: "EmailAddress" = Field(
+        ...,
+        description="Reference to the source entity of the relationship. Here an EmailAddress.",
+    )
+    target: "Incident" = Field(
+        ...,
+        description="Reference to the target entity of the relationship. Here an Incident.",
+    )
+    _relationship_type: Literal["related-to"] = "related-to"
+
+
+class EmailMessageRelatedToIncident(BaseRelationship):
+    """Represent a relationship indicating that an email message is related to incidents."""
+
+    source: "EmailMessage" = Field(
+        ...,
+        description="Reference to the source entity of the relationship. Here an EmailMessage.",
+    )
+    target: "Incident" = Field(
+        ...,
+        description="Reference to the target entity of the relationship. Here an Incident.",
+    )
+    _relationship_type: Literal["related-to"] = "related-to"

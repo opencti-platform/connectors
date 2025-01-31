@@ -36,7 +36,7 @@ class BaseEntity(BaseModelWithoutExtra):
     )
 
     _stix2_representation: Optional[Any] = PrivateAttr(None)
-    _id: str = PrivateAttr(None)
+    _id: str = PrivateAttr("")
 
     def model_post_init(
         self, context__: Any
@@ -107,7 +107,7 @@ class ExternalReference(BaseModelWithoutExtra):
 class TLPMarking(BaseEntity):
     """Represent a TLP marking definition."""
 
-    level: Literal["white", "green", "amber", "amber+strict" "red"] = Field(
+    level: Literal["white", "green", "amber", "amber+strict", "red"] = Field(
         ..., description="The level of the marking."
     )
 

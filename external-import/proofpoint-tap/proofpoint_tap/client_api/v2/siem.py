@@ -7,7 +7,14 @@ from typing import TYPE_CHECKING, Any, Literal, Optional
 from proofpoint_tap.client_api.common import BaseClient, ResponseModel
 from proofpoint_tap.errors import ProofPointAPIRequestParamsError
 from proofpoint_tap.warnings import PermissiveLiteral, Recommended
-from pydantic import AwareDatetime, Field, field_validator, model_validator
+from pydantic import (
+    AwareDatetime,
+    EmailStr,
+    Field,
+    IPvAnyAddress,
+    field_validator,
+    model_validator,
+)
 
 if TYPE_CHECKING:
     from yarl import URL
@@ -115,7 +122,7 @@ class ThreatInfo(ResponseModel):
 class MessageEvent(ResponseModel):
     """Model MessageEvent from /v2/siem/* responses."""
 
-    cc_addresses: Optional[list[str]] = Field(
+    cc_addresses: Optional[list[EmailStr]] = Field(
         None, alias="ccAddresses", description="List of CC email addresses."
     )
     cluster: str = Field(
@@ -125,7 +132,7 @@ class MessageEvent(ResponseModel):
     completely_rewritten: Optional[bool] = Field(
         None, alias="completelyRewritten", description="URL rewrite status."
     )
-    from_address: list[str] = Field(
+    from_address: list[EmailStr] = Field(
         ...,
         alias="fromAddress",
         description="Email address in the From header. Note: The documentation specifies a single email address but the API response is a list.",
@@ -192,12 +199,12 @@ class MessageEvent(ResponseModel):
         ...,
         description="SMTP recipient email address. Note: The documentation specifies a single email address but the API response is a list.",
     )
-    reply_to_address: Optional[list[str]] = Field(
+    reply_to_address: Optional[list[EmailStr]] = Field(
         None,
         alias="replyToAddress",
         description="Email address in the Reply-To header.",
     )
-    sender: str = Field(..., description="SMTP sender email address.")
+    sender: EmailStr = Field(..., description="SMTP sender email address.")
     sender_ip: str = Field(..., alias="senderIP", description="Sender's IP address.")
     spam_score: Optional[int] = Field(
         None,
@@ -210,7 +217,7 @@ class MessageEvent(ResponseModel):
     threats_info_map: list[ThreatInfo] = Field(
         ..., alias="threatsInfoMap", description="Details about detected threats."
     )
-    to_addresses: Optional[list[str]] = Field(
+    to_addresses: Optional[list[EmailStr]] = Field(
         None, alias="toAddresses", description="list of To email addresses."
     )
     xmailer: Optional[str] = Field(None, description="Content of the X-Mailer header.")
@@ -231,7 +238,7 @@ class ClickEvent(ResponseModel):
     classification: PermissiveLiteral[Literal["malware", "phish", "spam"]] = Field(
         ..., description="Threat classification of the URL."
     )
-    click_ip: str = Field(
+    click_ip: IPvAnyAddress = Field(
         ...,
         alias="clickIP",
         description="External IP of the user who clicked the link.",
@@ -245,7 +252,9 @@ class ClickEvent(ResponseModel):
     )
     recipient: str = Field(..., description="Email recipient.")
     sender: str = Field(..., description="Email sender.")
-    sender_ip: str = Field(..., alias="senderIP", description="Sender's IP address.")
+    sender_ip: IPvAnyAddress = Field(
+        ..., alias="senderIP", description="Sender's IP address."
+    )
     threat_id: str = Field(
         ..., alias="threatID", description="Details about detected threats."
     )

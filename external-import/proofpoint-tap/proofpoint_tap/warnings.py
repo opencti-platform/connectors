@@ -203,17 +203,6 @@ class PermissiveBaseModel(BaseModel):
                     stacklevel=2,
                 )
 
-    # @model_validator(mode="before")
-    # @classmethod
-    # def fill_all_missing(cls, values: dict[str, Any]) -> dict[str, Any]:
-    #     """Fill all missing fields with None."""
-    #     for field_name, field_info in cls.model_fields.items():
-    #         # apply field alias if any because we are before validation
-    #         field_name = field_info.alias or field_name
-    #         if field_name not in values:
-    #             values[field_name] = None
-    #     return values
-
     @model_validator(mode="after")
     def check_extra_fields(
         self: "PermissiveBaseModel",

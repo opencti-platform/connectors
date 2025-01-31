@@ -86,7 +86,7 @@ class ThreatSummary(ResponseModel):
         description="The category of the threat (impostor, malware, phish, or spam)",
     )
     status: PermissiveLiteral[Literal["active", "cleared", "falsePositive"]] = Field(
-        None, description="The status of the threat (active or cleared)"
+        ..., description="The status of the threat (active or cleared)"
     )
     detection_type: Optional[str] = Field(
         None, alias="detectionType", description="The type of detection for the threat"

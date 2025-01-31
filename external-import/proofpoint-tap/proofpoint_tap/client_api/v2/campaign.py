@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence
+from typing import TYPE_CHECKING, Literal, Optional, Sequence
 from urllib.parse import urljoin
 
 from proofpoint_tap.client_api.common import BaseClient, ResponseModel
@@ -102,7 +102,7 @@ class CampaignMember(ResponseModel):
         alias="threatTime",
     )
     threat_status: PermissiveLiteral[Literal["active", "cleared", "falsePositive"]] = (
-        Field(None, description="Status of the threat.", alias="threatStatus")
+        Field(..., description="Status of the threat.", alias="threatStatus")
     )
 
 
@@ -134,7 +134,7 @@ class CampaignDetailsResponse(ResponseModel):
     )
     notable: Recommended[bool] = Field(None, description="Undocumented.")
     families: Optional[Sequence[Family]] = Field(None, description="Undocumented.")
-    brands: Recommended[Sequence[Any]] = Field(None, description="Undocumented.")
+    brands: Optional[Sequence[Brand]] = Field(None, description="Undocumented.")
 
 
 # Client class

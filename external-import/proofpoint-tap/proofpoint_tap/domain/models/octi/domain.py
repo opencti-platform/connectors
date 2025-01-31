@@ -240,7 +240,7 @@ class Malware(BaseEntity):
             ]
         ]
     ] = Field(None, description="Types of the malware.")
-    is_family: bool = Field(None, description="Is the malware a family?")
+    is_family: bool = Field(..., description="Is the malware a family?")
     description: Optional[str] = Field(None, description="Description of the malware.")
     architecture_execution_env: Optional[
         list[
@@ -447,7 +447,7 @@ class Report(BaseEntity):
         None, description="External references of the report."
     )
     objects: list[BaseEntity] = Field(
-        None, description="Objects of the report.", min_length=1
+        ..., description="Objects of the report.", min_length=1
     )
 
     def to_stix2_object(self) -> stix2.v21.Report:
@@ -497,4 +497,81 @@ class Report(BaseEntity):
             lang=None,
             granular_markings=None,
             extensions=None,
+        )
+
+
+class Incident(BaseEntity):
+    """Represent an incident."""
+
+    name: str = Field(..., description="Name of the incident.", min_length=1)
+    incident_type: Optional[
+        Literal[
+            "alert",
+            "compromise",
+            "cybercrime",
+            "data-leak",
+            "information-system-disruption",
+            "phishing",
+            "ransomware",
+            "reputation-damage",
+            "typosquatting",
+        ]
+    ] = Field(None, description="Type of the incident.")
+    severity: Optional[Literal["low", "medium", "high", "critical"]] = Field(
+        None, description="Severity of the incident.", ge=0, le=10
+    )
+    description: Optional[str] = Field(None, description="Description of the incident.")
+    source: Optional[str] = Field(None, description="Source of the incident.")
+    # assignees: Optional[list[str]] = Field(None, description="Assignee(s) of the incident.")
+    # participants: Optional[list[str]] = Field(None, description="Participants of the incident.")
+    author: Optional["Author"] = Field(
+        None, description="Author reporting the incident."
+    )
+    labels: Optional[list[str]] = Field(None, description="Labels of the incident.")
+    markings: Optional[list["TLPMarking"]] = Field(
+        None, description="Markings of the incident."
+    )
+    external_references: Optional[list["ExternalReference"]] = Field(
+        None, description="External references of the incident."
+    )
+    first_seen: Optional["AwareDatetime"] = Field(
+        None, description="First seen date of the incident."
+    )
+    last_seen: Optional["AwareDatetime"] = Field(
+        None, description="Last seen date of the incident."
+    )
+    objective: Optional[str] = Field(None, description="Objective.")
+
+    def to_stix2_object(self) -> stix2.v21.Incident:
+        """Make stix object."""
+        if self._stix2_representation is not None:
+            return self._stix2_representation
+        return stix2.Incident(
+            id=pycti.Incident.generate_id(name=self.name, created=self.first_seen),
+            name=self.name,
+            description=self.description,
+            created_by_ref=self.author.id if self.author is not None else None,
+            labels=self.labels,
+            external_references=[
+                external_reference.to_stix2_object()
+                for external_reference in self.external_references or []
+            ],
+            object_marking_refs=[marking.id for marking in self.markings or []],
+            # unused
+            created=None,
+            modified=None,
+            kill_chain_phases=None,
+            revoked=None,
+            confidence=None,
+            lang=None,
+            granular_markings=None,
+            extensions=None,
+            # customs
+            custom_properties={
+                "source": self.source,
+                "severity": self.severity,
+                "incident_type": self.incident_type,
+                "first_seen": self.first_seen,
+                "last_seen": self.last_seen,
+            },
         )

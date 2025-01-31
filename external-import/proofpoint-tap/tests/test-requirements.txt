@@ -1,2 +1,2 @@
 # Hack to be detected by the CI test step
-./external-import/proofpoint-tap/.[all]
+./external-import/proofpoint-tap/.[test]

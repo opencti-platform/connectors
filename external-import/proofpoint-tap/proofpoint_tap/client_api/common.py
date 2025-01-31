@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from types import SimpleNamespace
 
     from aiohttp import ClientResponse, TraceRequestStartParams
+    from pydantic import SecretStr
 
 
 ResponseModel = PermissiveBaseModel  # Alias
@@ -57,8 +58,8 @@ class BaseClient(  # noqa: B024 # Even though there is no abstract method, it is
     def __init__(
         self: "BaseClient",
         base_url: URL,
-        principal: str,
-        secret: str,
+        principal: "SecretStr",
+        secret: "SecretStr",
         timeout: "timedelta",
         retry: int,
         backoff: "timedelta",
@@ -67,8 +68,8 @@ class BaseClient(  # noqa: B024 # Even though there is no abstract method, it is
 
         Args:
             base_url (URL): The base URL of the TAP API.
-            principal (str): The principal to authenticate with the API.
-            secret (str): The secret to authenticate with the API.
+            principal (SecretStr): The principal to authenticate with the API.
+            secret (SecretStr): The secret to authenticate with the API.
             timeout (timedelta): The timeout for the API requests.
             retry (int): The number of attempt to perform.
             backoff (timedelta): The backoff time between retries.
@@ -76,7 +77,7 @@ class BaseClient(  # noqa: B024 # Even though there is no abstract method, it is
         """
         # process input
         self.base_url = base_url
-        self.auth = BasicAuth(principal, secret)
+        self.auth = BasicAuth(principal.get_secret_value(), secret.get_secret_value())
         timeout_seconds: float = timeout.total_seconds()
         self._timeout = ClientTimeout(
             total=timeout_seconds, sock_connect=timeout_seconds * 5
@@ -232,7 +233,6 @@ class BaseClient(  # noqa: B024 # Even though there is no abstract method, it is
             >>> client = BaseTAPClientSubClass(**kwargs)
             >>> query_url = client.format_get_query("path", {"param": "value"})
             >>> response = await client.get(query_url, ResponseModel)
-
 
         """
         response = await self._get(query_url)

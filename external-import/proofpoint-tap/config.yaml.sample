@@ -1,0 +1,31 @@
+opencti:
+  url: 'http://localhost:PORT'
+  token: 'ChangeMe'
+
+connector:
+  id: 'ChangeMe'
+  name: 'Proofpoint TAP'
+  scope: 'report'
+  log_level: 'info'
+  duration_period: 'PT30M' # Interval given for scheduler process in ISO-8601 format
+  #============================================#
+  # Optional connector's definition parameters #
+  #============================================#
+  #queue_threshold: 500
+  #run_and_terminate: 'False'
+  #send_to_queue: 'True'
+  #send_to_directory: 'False'
+  #send_to_directory_path: 'ChangeMe'
+  #send_to_directory_retention: 7
+
+tap:
+  api_base_url: 'ChangeMe'
+  api_principal_key: 'ChangeMe'
+  api_secret_key: 'ChangeMe'
+  api_timeout: 'PT30S'
+  api_backoff: 'PT5S'
+  api_retries: 5
+  marking_definition: 'white'
+  export_campaigns: true
+  export_events: true
+  events_type: 'issues'

@@ -89,3 +89,17 @@ class CampaignPort(ABC):
     def observed_data(self) -> list[ObservedDataPort]:
         """Get the observed data of the campaign."""
         pass
+
+
+class CampaignsPort(ABC):
+    """Campaigns port interface."""
+
+    @abstractmethod
+    def list(self, start_time: "datetime", stop_time: "datetime") -> list[str]:
+        """Fetch the campaign ids."""
+        pass
+
+    @abstractmethod
+    def details(self, campaign_id: str) -> CampaignPort:
+        """Fetch the campaign details."""
+        pass
