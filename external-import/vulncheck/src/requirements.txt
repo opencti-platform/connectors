@@ -1,0 +1,4 @@
+vulncheck-sdk==0.0.7
+pycti==6.2.18
+pydantic==2.8.2
+validators==0.33.0
