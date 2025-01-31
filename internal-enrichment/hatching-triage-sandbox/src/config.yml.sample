@@ -6,9 +6,8 @@ connector:
   id: 'Hatching_Triage_Sandbox'
   type: 'INTERNAL_ENRICHMENT'
   name: 'Hatching Triage Sandbox'
-  scope: 'Artifact'
+  scope: 'Artifact,Url'
   auto: false # Enable/disable auto-enrichment of observables
-  confidence_level: 50 # From 0 (Unknown) to 100 (Fully trusted)
   log_level: 'info'
 
 hatching_triage_sandbox:

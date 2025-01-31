@@ -7,9 +7,8 @@ services:
       - OPENCTI_TOKEN=ChangeMe
       - CONNECTOR_ID=Hatching_Triage_Sandbox
       - "CONNECTOR_NAME=Hatching Triage Sandbox"
-      - CONNECTOR_SCOPE=Artifact
+      - CONNECTOR_SCOPE=Artifact,Url
       - CONNECTOR_AUTO=false # Enable/disable auto-enrichment of observables
-      - CONNECTOR_CONFIDENCE_LEVEL=50 # From 0 (Unknown) to 100 (Fully trusted)
       - CONNECTOR_LOG_LEVEL=error
       - HATCHING_TRIAGE_SANDBOX_BASE_URL=https://tria.ge/api # Public URL, see https://tria.ge/docs/
       - HATCHING_TRIAGE_SANDBOX_TOKEN=ChangeMe # See https://tria.ge/account

@@ -34,7 +34,7 @@ class HatchingTriageSandboxConnector:
             if os.path.isfile(config_file_path)
             else {}
         )
-        self.helper = OpenCTIConnectorHelper(config)
+        self.helper = OpenCTIConnectorHelper(config, playbook_compatible=True)
 
         self.identity = self.helper.api.identity.create(
             type="Organization",
@@ -91,7 +91,10 @@ class HatchingTriageSandboxConnector:
             config,
         )
 
-    def _process_overview_report(self, observable, overview_dict, sample_id):
+    def _process_overview_report(
+        self, observable, overview_dict, sample_id, entity_type
+    ):
+
         bundle_objects = []
 
         # Create external reference
@@ -165,7 +168,11 @@ class HatchingTriageSandboxConnector:
                     # Differentiate between C2 IP and URL
                     parsed = c2.split(":")[0]
                     key = "Url"
-                    relationship_type = "communicates-with"
+                    relationship_type = (
+                        "communicates-with"
+                        if entity_type == "artifact"
+                        else "related-to"
+                    )
                     if self._is_ipv4_address(parsed):
                         key = "IPv4-Addr"
                     else:
@@ -342,61 +349,66 @@ class HatchingTriageSandboxConnector:
                     )
 
         # Attach domains
-        domains = [
-            task_dict.get("iocs", {}).get("domains", [])
-            for task_dict in overview_dict["targets"]
-        ]
-        for domain in domains[0]:
-            domain_stix = DomainName(
-                value=domain,
-                object_marking_refs=[stix2.TLP_WHITE],
-                custom_properties={
-                    "labels": ["dynamic"],
-                    "created_by_ref": self.identity,
-                },
+        if overview_dict.get("targets"):
+            relationship_type = (
+                "communicates-with" if entity_type == "artifact" else "related-to"
             )
-            relationship = stix2.Relationship(
-                id=StixCoreRelationship.generate_id(
-                    "communicates-with", observable["standard_id"], domain_stix.id
-                ),
-                relationship_type="communicates-with",
-                created_by_ref=self.identity,
-                source_ref=observable["standard_id"],
-                target_ref=domain_stix.id,
-                allow_custom=True,
-            )
-            bundle_objects.append(domain_stix)
-            bundle_objects.append(relationship)
-        # Attach IP addresses
-        ips = [
-            task_dict.get("iocs", {}).get("ips", [])
-            for task_dict in overview_dict["targets"]
-        ]
-        for ip in ips[0]:
-            # Filter out non-global and known DNS IPs
-            if not ipaddress.ip_address(ip).is_global:
-                continue
-            if ip in ["8.8.8.8", "8.8.4.4"]:
-                continue
-            host_stix = IPv4Address(
-                value=ip,
-                custom_properties={
-                    "labels": ["dynamic"],
-                    "created_by_ref": self.identity,
-                },
-            )
-            relationship = stix2.Relationship(
-                id=StixCoreRelationship.generate_id(
-                    "communicates-with", observable["standard_id"], host_stix.id
-                ),
-                relationship_type="communicates-with",
-                created_by_ref=self.identity,
-                source_ref=observable["standard_id"],
-                target_ref=host_stix.id,
-                allow_custom=True,
-            )
-            bundle_objects.append(host_stix)
-            bundle_objects.append(relationship)
+
+            domains = [
+                task_dict.get("iocs", {}).get("domains", [])
+                for task_dict in overview_dict["targets"]
+            ]
+            for domain in domains[0]:
+                domain_stix = DomainName(
+                    value=domain,
+                    object_marking_refs=[stix2.TLP_WHITE],
+                    custom_properties={
+                        "labels": ["dynamic"],
+                        "created_by_ref": self.identity,
+                    },
+                )
+                relationship = stix2.Relationship(
+                    id=StixCoreRelationship.generate_id(
+                        relationship_type, observable["standard_id"], domain_stix.id
+                    ),
+                    relationship_type=relationship_type,
+                    created_by_ref=self.identity,
+                    source_ref=observable["standard_id"],
+                    target_ref=domain_stix.id,
+                    allow_custom=True,
+                )
+                bundle_objects.append(domain_stix)
+                bundle_objects.append(relationship)
+            # Attach IP addresses
+            ips = [
+                task_dict.get("iocs", {}).get("ips", [])
+                for task_dict in overview_dict["targets"]
+            ]
+            for ip in ips[0]:
+                # Filter out non-global and known DNS IPs
+                if not ipaddress.ip_address(ip).is_global:
+                    continue
+                if ip in ["8.8.8.8", "8.8.4.4"]:
+                    continue
+                host_stix = IPv4Address(
+                    value=ip,
+                    custom_properties={
+                        "labels": ["dynamic"],
+                        "created_by_ref": self.identity,
+                    },
+                )
+                relationship = stix2.Relationship(
+                    id=StixCoreRelationship.generate_id(
+                        relationship_type, observable["standard_id"], host_stix.id
+                    ),
+                    relationship_type=relationship_type,
+                    created_by_ref=self.identity,
+                    source_ref=observable["standard_id"],
+                    target_ref=host_stix.id,
+                    allow_custom=True,
+                )
+                bundle_objects.append(host_stix)
+                bundle_objects.append(relationship)
         # Attach the TTPs
         if "signatures" in overview_dict:
             for signature_dict in overview_dict["signatures"]:
@@ -431,29 +443,60 @@ class HatchingTriageSandboxConnector:
                     bundle_objects.append(relationship)
         # Serialize and send all bundles
         if bundle_objects:
-            bundle = self.helper.stix2_create_bundle(bundle_objects)
-            bundles_sent = self.helper.send_stix2_bundle(bundle)
-            return f"Sent {len(bundles_sent)} stix bundle(s) for worker import"
+            self._send_bundle(bundle_objects)
         else:
             return "Nothing to attach"
 
-    def _process_file(self, observable):
+    def _send_bundle(self, bundle_objects):
+        bundle = self.helper.stix2_create_bundle(bundle_objects)
+        bundles_sent = self.helper.send_stix2_bundle(bundle)
+        return f"Sent {len(bundles_sent)} stix bundle(s) for worker import"
+
+    def _process_file(self, observable, entity_type):
         self.helper.log_info("Triggering the sandbox...")
 
-        if not observable["importFiles"]:
-            raise ValueError(f"No files found for {observable['observable_value']}")
+        sample_id = None
+        observable_value = observable["observable_value"]
 
-        # Build the URI to download the file
-        file_name = observable["importFiles"][0]["name"]
-        file_id = observable["importFiles"][0]["id"]
-        file_uri = f"{self.octi_api_url}/storage/get/{file_id}"
-        file_content = self.helper.api.fetch_opencti_file(file_uri, True)
-        sha256 = self._get_sha256(file_content)
+        if entity_type == "artifact":
+            if not observable["importFiles"]:
+                raise ValueError(f"No files found for {observable_value}")
+
+            # Build the URI to download the file
+            file_name = observable["importFiles"][0]["name"]
+            file_id = observable["importFiles"][0]["id"]
+            file_uri = f"{self.octi_api_url}/storage/get/{file_id}"
+            file_content = self.helper.api.fetch_opencti_file(file_uri, True)
+            sha256 = self._get_sha256(file_content)
+
+            search_query = f"sha256:{sha256}"
+            sample_id = self._search_for_analysis(search_query)
+
+            if sample_id is None:
+                sample_id = self._submit_sample(
+                    file_name=file_name, file_content=file_content
+                )
+
+        if entity_type == "url":
+            search_query = f"url:{observable_value}"
+            sample_id = self._search_for_analysis(search_query)
+
+            if sample_id is None:
+                sample_id = self._submit_sample(url=observable_value)
+
+        # Get the Overview report
+        overview_dict = self.triage_client.overview_report(sample_id)
+
+        return self._process_overview_report(
+            observable, overview_dict, sample_id, entity_type
+        )
+
+    def _search_for_analysis(self, search_query):
         sample_id = None
 
         if self.use_existing_analysis:
             # Perform a search of the sha256 to see if there's any existing analyses
-            search_paginator = self.triage_client.search(f"sha256:{sha256}", max=1)
+            search_paginator = self.triage_client.search(query=search_query, max=1)
             for search in search_paginator:
                 existing_status = search["status"]
                 if existing_status == "reported":
@@ -470,36 +513,41 @@ class HatchingTriageSandboxConnector:
                 # Don't paginate, just get the first result
                 break
 
-        if sample_id is None:
+        return sample_id
+
+    def _submit_sample(self, url=None, file_name=None, file_content=None):
+
+        sample_json = None
+
+        if file_content is not None:
             file_obj = io.BytesIO(file_content)
-            sample_json = self.triage_client.submit_sample_file(file_name, file_obj)
-            sample_id = sample_json["id"]
-            sample_status = sample_json["status"]
-            self.helper.log_info(
-                f'Started new analysis {sample_id}, has status "{sample_status}".'
+            sample_json = self.triage_client.submit_sample_file(
+                filename=file_name, file=file_obj
             )
-            self._wait_for_analysis(sample_id)
+        elif url is not None:
+            sample_json = self.triage_client.submit_sample_url(url=url)
 
-        # Get the Overview report
-        overview_dict = self.triage_client.overview_report(sample_id)
+        sample_id = sample_json["id"]
+        sample_status = sample_json["status"]
+        self.helper.log_info(
+            f'Started new analysis {sample_id}, has status "{sample_status}".'
+        )
+        self._wait_for_analysis(sample_id)
 
-        return self._process_overview_report(observable, overview_dict, sample_id)
+        return sample_id
 
-    def _process_observable(self, observable):
+    def _process_observable(self, observable, entity_type):
         self.helper.log_info(
             "Processing the observable " + observable["observable_value"]
         )
 
         # If File, Artifact
-        if observable["entity_type"] == "Artifact":
-            return self._process_file(observable)
-        else:
-            raise ValueError(
-                f"Failed to process observable, {observable['entity_type']} is not a supported entity type."
-            )
+        return self._process_file(observable, entity_type)
 
     def _process_message(self, data: Dict):
         observable = data["enrichment_entity"]
+        stix_objects = data["stix_objects"]
+        entity_type = observable["entity_type"].lower()
 
         # Extract TLP
         tlp = "TLP:CLEAR"
@@ -510,7 +558,16 @@ class HatchingTriageSandboxConnector:
             raise ValueError(
                 "Do not send any data, TLP of the observable is greater than MAX TLP"
             )
-        return self._process_observable(observable)
+
+        if entity_type in ["artifact", "url"]:
+            return self._process_observable(observable, entity_type)
+        else:
+            if not data.get("event_type"):
+                self._send_bundle(stix_objects)
+            else:
+                raise ValueError(
+                    f"Failed to process observable, {observable['entity_type']} is not a supported entity type."
+                )
 
     def _wait_for_analysis(self, sample_id):
         """
