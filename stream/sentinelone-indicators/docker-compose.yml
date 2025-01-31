@@ -1,0 +1,23 @@
+version: '3'
+services:
+  connector-template:
+    image: opencti/connector-sentinelone-indicators:1.0.0
+    environment:
+      - OPENCTI_URL=http://localhost
+      - OPENCTI_TOKEN=CHANGEME
+
+      - CONNECTOR_ID=CHANGEME
+      - CONNECTOR_NAME=CHANGEME
+      - CONNECTOR_SCOPE=CHANGEME
+      - CONNECTOR_LOG_LEVEL=error
+
+      - CONNECTOR_LIVE_STREAM_ID=live
+      - CONNECTOR_LIVE_STREAM_LISTEN_DELETE=true
+      - CONNECTOR_LIVE_STREAM_NO_DEPENDENCIES=true
+
+      - SENTINELONE_URL=changeMeEndingIn/
+      - SENTINELONE_API_KEY=changeMe
+      - SENTINELONE_ACCOUNT_ID=changeMe
+      - SENTINELONE_MAX_API_ATTEMPTS=5
+
+    restart: always
