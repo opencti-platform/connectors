@@ -1,4 +1,4 @@
-pyTenable==1.5.3
+pyTenable==1.6.0
 python-dateutil==2.9.0.post0
 pycti==6.4.10
 validators==0.33.0

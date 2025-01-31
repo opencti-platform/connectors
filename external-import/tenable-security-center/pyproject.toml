@@ -20,7 +20,7 @@ dependencies = [
     "pycti==6.4.10",
     "validators~=0.33.0",
     "pydantic>=2.8.2,<3.0.0",
-    "pytenable~=1.5.3", # for now we handle API from 5.13 to 6.4
+    "pytenable~=1.6.0", # for now we handle API from 5.13 to 6.4
     "cvss~=3.3",
     "semver>=3,<4",
     "requests~=2.32.2",
