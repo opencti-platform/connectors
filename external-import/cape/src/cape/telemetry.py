@@ -12,6 +12,8 @@ from cape.cape import (
     cuckooReportTTP,
     cuckooTarget,
 )
+from pycti import Indicator as pyctiIndicator
+from pycti import Malware as pyctiMalware
 from pycti import Note as pyctiNote
 from pycti import Report as pyctiReport
 from pycti import StixCoreRelationship
@@ -130,7 +132,7 @@ class openCTIInterface:
             if self.CreateIndicator:
                 STIXPattern = self.getStixPattern(host.ip, "ipv4")
                 IPind = Indicator(
-                    id=Indicator.generate_id(STIXPattern),
+                    id=pyctiIndicator.generate_id(STIXPattern),
                     name=host.ip,
                     pattern=STIXPattern,
                     pattern_type="stix",
@@ -159,14 +161,14 @@ class openCTIInterface:
             if self.CreateIndicator:
                 STIXPattern = self.getStixPattern(host.domain, "FQDN")
                 DNSind = Indicator(
-                    id=Indicator.generate_id(STIXPattern),
+                    id=pyctiIndicator.generate_id(STIXPattern),
                     name=host.domain,
                     pattern=STIXPattern,
                     pattern_type="stix",
                 )
                 STIXPattern = self.getStixPattern(host.ip, "ipv4")
                 IPind = Indicator(
-                    id=Indicator.generate_id(STIXPattern),
+                    id=pyctiIndicator.generate_id(STIXPattern),
                     name=host.ip,
                     pattern=STIXPattern,
                     pattern_type="stix",
@@ -317,7 +319,7 @@ class openCTIInterface:
             mime_type=file.type,
         )
         ind = Indicator(
-            id=Indicator.generate_id(STIXPattern),
+            id=pyctiIndicator.generate_id(STIXPattern),
             name=file.name,
             pattern=STIXPattern,
             pattern_type="stix",
@@ -356,7 +358,7 @@ class openCTIInterface:
             if self.CreateIndicator:
                 STIXPattern = self.getStixPattern(file.sha256.upper(), "sha256")
                 fileind = Indicator(
-                    id=Indicator.generate_id(STIXPattern),
+                    id=pyctiIndicator.generate_id(STIXPattern),
                     name=file.name,
                     pattern=STIXPattern,
                     pattern_type="stix",
@@ -461,7 +463,9 @@ class openCTIInterface:
 
         if not MalwareX:
             MalwareX = Malware(
-                id=Malware.generate_id(name=Detection), name=Detection, is_family=False
+                id=pyctiMalware.generate_id(name=Detection),
+                name=Detection,
+                is_family=False,
             )
 
         return MalwareX
@@ -567,7 +571,10 @@ class openCTIInterface:
             AttackPatterns = []
 
         if self.report.detections:
-            Malware = self.Get_Malware(self.report.detections)
+            detection = ""
+            if len(self.report.detections) > 0:
+                detection = self.report.detections[0]["family"]
+            Malware = self.Get_Malware(detection)
         else:
             Malware = None
 
