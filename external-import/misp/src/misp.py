@@ -76,6 +76,51 @@ OPENCTISTIX2 = {
 }
 FILETYPES = ["file-name", "file-md5", "file-sha1", "file-sha256"]
 
+marking_tlp_clear = stix2.MarkingDefinition(
+    id=MarkingDefinition.generate_id("TLP", "TLP:CLEAR"),
+    definition_type="statement",
+    definition={"statement": "custom"},
+    allow_custom=True,
+    x_opencti_definition_type="TLP",
+    x_opencti_definition="TLP:CLEAR",
+)
+
+marking_pap_clear = stix2.MarkingDefinition(
+    id=MarkingDefinition.generate_id("PAP", "PAP:CLEAR"),
+    definition_type="statement",
+    definition={"statement": "custom"},
+    allow_custom=True,
+    x_opencti_definition_type="PAP",
+    x_opencti_definition="PAP:CLEAR",
+)
+
+marking_pap_green = stix2.MarkingDefinition(
+    id=MarkingDefinition.generate_id("PAP", "PAP:GREEN"),
+    definition_type="statement",
+    definition={"statement": "custom"},
+    allow_custom=True,
+    x_opencti_definition_type="PAP",
+    x_opencti_definition="PAP:GREEN",
+)
+
+marking_pap_amber = stix2.MarkingDefinition(
+    id=MarkingDefinition.generate_id("PAP", "PAP:AMBER"),
+    definition_type="statement",
+    definition={"statement": "custom"},
+    allow_custom=True,
+    x_opencti_definition_type="PAP",
+    x_opencti_definition="PAP:AMBER",
+)
+
+marking_pap_red = stix2.MarkingDefinition(
+    id=MarkingDefinition.generate_id("PAP", "PAP:RED"),
+    definition_type="statement",
+    definition={"statement": "custom"},
+    allow_custom=True,
+    x_opencti_definition_type="PAP",
+    x_opencti_definition="PAP:RED",
+)
+
 
 def is_uuid(val):
     try:
@@ -612,7 +657,7 @@ class Misp:
             if "Tag" in event["Event"]:
                 event_markings = self.resolve_markings(event["Event"]["Tag"])
             else:
-                event_markings = [stix2.TLP_WHITE]
+                event_markings = [marking_tlp_clear]
             # Elements
             event_elements = self.prepare_elements(
                 event["Event"].get("Galaxy", []),
@@ -2353,9 +2398,9 @@ class Misp:
                     )
                     markings.append(marking)
             if tag_name_lower == "tlp:clear":
-                markings.append(stix2.TLP_WHITE)
+                markings.append(marking_tlp_clear)
             if tag_name_lower == "tlp:white":
-                markings.append(stix2.TLP_WHITE)
+                markings.append(marking_tlp_clear)
             if tag_name_lower == "tlp:green":
                 markings.append(stix2.TLP_GREEN)
             if tag_name_lower == "tlp:amber":
@@ -2372,8 +2417,17 @@ class Misp:
                 markings.append(marking)
             if tag_name_lower == "tlp:red":
                 markings.append(stix2.TLP_RED)
+            # handle PAP markings
+            if tag_name_lower == "pap:clear":
+                markings.append(marking_pap_clear)
+            if tag_name_lower == "pap:green":
+                markings.append(marking_pap_green)
+            if tag_name_lower == "pap:amber":
+                markings.append(marking_pap_amber)
+            if tag_name_lower == "pap:red":
+                markings.append(marking_pap_red)
         if len(markings) == 0 and with_default:
-            markings.append(stix2.TLP_WHITE)
+            markings.append(marking_tlp_clear)
         return markings
 
     def resolve_tags(self, tags):
@@ -2384,6 +2438,7 @@ class Misp:
 
         for tag in tags:
             self.helper.log_info(f"found tag: {tag}")
+            tag_name_lower = tag["name"].lower()
             # we take the tag as-is if it starts by a prefix stored in the keep_original_tags_as_label configuration
             if any(
                 map(
@@ -2395,11 +2450,16 @@ class Misp:
                 opencti_tags.append(tag["name"])
 
             elif (
-                tag["name"] != "tlp:white"
-                and tag["name"] != "tlp:green"
-                and tag["name"] != "tlp:amber"
-                and tag["name"] != "tlp:amber+strict"
-                and tag["name"] != "tlp:red"
+                tag_name_lower != "tlp:white"
+                and tag_name_lower != "tlp:clear"
+                and tag_name_lower != "tlp:green"
+                and tag_name_lower != "tlp:amber"
+                and tag_name_lower != "tlp:amber+strict"
+                and tag_name_lower != "tlp:red"
+                and tag_name_lower != "pap:clear"
+                and tag_name_lower != "pap:green"
+                and tag_name_lower != "pap:amber"
+                and tag_name_lower != "pap:red"
                 and not tag["name"].startswith("misp-galaxy:threat-actor")
                 and not tag["name"].startswith("misp-galaxy:mitre-threat-actor")
                 and not tag["name"].startswith("misp-galaxy:microsoft-activity-group")
