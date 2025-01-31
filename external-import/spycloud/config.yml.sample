@@ -1,0 +1,28 @@
+opencti:
+  url: 'http://localhost:PORT'
+  token: 'ChangeMe'
+
+connector:
+  id: 'ChangeMe'
+  type: 'EXTERNAL_IMPORT'
+  name: 'SpyCloud'
+  scope: 'ChangeMe'
+  log_level: 'info'
+  duration_period: 'PT5M' # Interval given for scheduler process in ISO-8601 format
+  #============================================#
+  # Optional connector's definition parameters #
+  #============================================#
+  #queue_threshold: 500
+  #run_and_terminate: 'False'
+  #send_to_queue: 'True'
+  #send_to_directory: 'False'
+  #send_to_directory_path: 'ChangeMe'
+  #send_to_directory_retention: 7
+
+spycloud:
+  api_base_url: 'ChangeMe'
+  api_key: 'ChangeMe'
+  severity_levels: '20,25' # Severities list to filter breach records (allowed values are ['2', '5', '20', '25'])
+  watchlist_types: 'domain,subdomain' # Watchlist types list to filter breach records (allowed values are ['email', 'domain', 'subdomain', 'ip'])
+  tlp_level: 'amber+strict' # TLP level to set on imported entities (allowed values are ['white', 'green', 'amber', 'amber+strict', 'red'])
+  import_start_date: '1970-01-01T00:00:00Z'

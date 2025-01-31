@@ -1,0 +1,33 @@
+{
+  "cursor": "",
+  "hits": 1,
+  "results": [
+    {
+      "acquisition_date": "2024-11-22T00:00:00Z",
+      "uuid": "8d0edaea-56e4-4731-9ceb-a8f00d23b788",
+      "combo_list_flag": "YES",
+      "tlp": "amber",
+      "type": "PUBLIC",
+      "breach_category": "exfiltrated",
+      "num_records": 234444786,
+      "title": "Telegram Combo Cloudxurl",
+      "spycloud_publish_date": "2024-12-04T00:00:00Z",
+      "description": "On an unknown date, personally identifiable information (PII) data allegedly belonging to individuals/consumers based in an unknown country was leaked online. The data contains salts, passwords, email addresses, usernames, and additional personal information. This breach is being publicly shared on the Internet.",
+      "site_description": "This PII data allegedly belongs to individuals/consumers based in an unknown country.",
+      "site": "n/a",
+      "id": 67701,
+      "confidence": 3,
+      "breach_main_category": "breach",
+      "consumer_category": "publicexposure",
+      "sensitive_source": false,
+      "short_title": "Telegram Combo Cloudxurl",
+      "assets": {
+        "target_url": 223282538,
+        "salt": 90,
+        "username": 135505898,
+        "password": 231369461,
+        "email": 98941453
+      }
+    }
+  ]
+}

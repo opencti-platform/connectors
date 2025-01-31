@@ -1,0 +1,43 @@
+version: '3'
+services:
+  spycloud:
+    image: opencti/spycloud:6.6.0
+    environment:
+      # Connector's generic execution parameters
+      - OPENCTI_URL=http://localhost
+      - OPENCTI_TOKEN=CHANGEME
+
+      # Connector's definition parameters REQUIRED
+      - CONNECTOR_ID=CHANGEME
+      - CONNECTOR_NAME=CHANGEME
+      - CONNECTOR_SCOPE=CHANGEME
+      - CONNECTOR_LOG_LEVEL=error
+      - CONNECTOR_DURATION_PERIOD=CHANGEME # ISO8601 format in String, start with 'P...' for Period
+
+      # Connector's definition parameters OPTIONAL
+      # - CONNECTOR_QUEUE_THRESHOLD=500 # Default 500Mo, Float accepted
+      # - CONNECTOR_RUN_AND_TERMINATE=False # Default False, True run connector once
+      # - CONNECTOR_SEND_TO_QUEUE=True # Default True
+      # - CONNECTOR_SEND_TO_DIRECTORY=False # Default False 
+      # - CONNECTOR_SEND_TO_DIRECTORY_PATH=CHANGEME # if CONNECTOR_SEND_TO_DIRECTORY is True, you must specify a path
+      # - CONNECTOR_SEND_TO_DIRECTORY_RETENTION=7 # Default 7, in days
+
+      # Connector's custom execution parameters
+      - SPYCLOUD_API_BASE_URL=CHANGEME
+      - SPYCLOUD_API_KEY=CHANGEME
+      - SPYCLOUD_SEVERITY_LEVELS=20,25 # Severities list to filter breach records (allowed values are ['2', '5', '20', '25'])
+      - SPYCLOUD_WATCHLIST_TYPES=domain,subdomain # Watchlist types list to filter breach records (allowed values are ['email', 'domain', 'subdomain', 'ip'])
+      - "SPYCLOUD_TLP_LEVEL=amber+strict" # TLP level to set on imported entities (allowed values are ['white', 'green', 'amber', 'amber+strict', 'red'])
+      - SPYCLOUD_IMPORT_START_DATE=1970-01-01T00:00:00Z
+
+      # Add proxy parameters below if needed
+      # - HTTP_PROXY=CHANGEME
+      # - HTTPS_PROXY=CHANGEME
+      # - NO_PROXY=CHANGEME
+    restart: unless-stopped
+    # networks:
+    #   - docker_default
+
+# networks:
+#   docker_default:
+#     external: true

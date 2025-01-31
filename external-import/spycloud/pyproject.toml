@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spycloud"
+description = "Filigran connector to import data from Spycloud into OpenCTI"
+dynamic = ["version"]
+readme = "README.md"
+authors = [
+  {name = "Filigran"},
+  {name = "Pauline Eustachy", email = "pauline.eustachy@filigran.io"},
+]
+requires-python = ">= 3.11, <3.13"
+dependencies = [
+    "pycti==6.4.7",
+    "pydantic~=2.10.4",
+    "requests~=2.32.2",
+    "stix2~=3.0.1",
+    "validators~=0.34.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.1.1,<9",
+]
+
+all = [
+    "spycloud[test]"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.dynamic]
+version = {attr = "spycloud_connector.__version__"}
