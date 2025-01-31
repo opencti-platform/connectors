@@ -16,3 +16,4 @@ sekoia:
   api_key: 'ChangeMe'
   start_date: '2022-01-01'  # Optional, the date to start consuming data from. Maybe in the formats YYYY-MM-DD or YYYY-MM-DDT00:00:00
   create_observables: true  # Create observables from indicators
+  import_source_list: false # Create the list of sources observed by Sekoia as label
