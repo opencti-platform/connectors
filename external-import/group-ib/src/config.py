@@ -1,10 +1,137 @@
 import os
+from pathlib import Path
+from typing import Any
 
+import yaml
+from cyberintegrations.utils import FileHandler
+from pycti import get_config_variable
 from stix2 import TLP_AMBER, TLP_GREEN, TLP_RED, TLP_WHITE
 from stix2.v21.vocab import MALWARE_TYPE
 
 
-class Config(object):
+class ConfigConnector:
+    collection_map = {
+        "apt_threat": "apt/threat",
+        "apt_threat_actor": "apt/threat_actor",
+        "attacks_ddos": "attacks/ddos",
+        "attacks_deface": "attacks/deface",
+        "attacks_phishing_group": "attacks/phishing_group",
+        "attacks_phishing_kit": "attacks/phishing_kit",
+        "compromised_access": "compromised/access",
+        "compromised_account_group": "compromised/account_group",
+        "compromised_bank_card_group": "compromised/bank_card_group",
+        "compromised_discord": "compromised/discord",
+        "compromised_imei": "compromised/imei",
+        "compromised_masked_card": "compromised/masked_card",
+        "compromised_messenger": "compromised/messenger",
+        "compromised_mule": "compromised/mule",
+        "hi_open_threats": "hi/open_threats",
+        "hi_threat": "hi/threat",
+        "hi_threat_actor": "hi/threat_actor",
+        "ioc_common": "ioc/common",
+        "malware_cnc": "malware/cnc",
+        "malware_config": "malware/config",
+        "malware_malware": "malware/malware",
+        "malware_signature": "malware/signature",
+        "malware_yara": "malware/yara",
+        "osi_git_repository": "osi/git_repository",
+        "osi_public_leak": "osi/public_leak",
+        "osi_vulnerability": "osi/vulnerability",
+        "suspicious_ip_open_proxy": "suspicious_ip/open_proxy",
+        "suspicious_ip_scanner": "suspicious_ip/scanner",
+        "suspicious_ip_socks_proxy": "suspicious_ip/socks_proxy",
+        "suspicious_ip_tor_node": "suspicious_ip/tor_node",
+        "suspicious_ip_vpn": "suspicious_ip/vpn",
+    }
+
+    def __init__(self):
+        """
+        Initialize the connector with necessary configurations
+        """
+        # Load configuration file
+        self.load = self._load_config()
+        self.setting_varibles_names_for_env = self._get_setting_varibles_names_for_env(
+            data=self.load
+        )
+        self.setting_varibles_names_for_yml = self._get_setting_varibles_names_for_yml(
+            data=self.setting_varibles_names_for_env
+        )
+        self._initialize_configurations()
+        self.collection_mapping_config = FileHandler().read_json_config(
+            self.CONFIG_JSON
+        )
+
+    def _load_config(self) -> dict:
+        """
+        Load the configuration from the YAML file
+        :return: Configuration dictionary
+        """
+
+        config_file_path = (
+            Path(__file__).parents[1].joinpath("src").joinpath("config.yml")
+        )
+        config = (
+            yaml.load(open(config_file_path), Loader=yaml.FullLoader)
+            if os.path.isfile(config_file_path)
+            else {}
+        )
+        return config
+
+    def _get_setting_varibles_names_for_env(
+        self, data: dict[str, int | str, bool | dict] | Any
+    ) -> list[str]:
+        keys = []
+        if isinstance(data, dict):
+            for key, value in data.items():
+
+                formated_key = key.upper().replace("/", "_")
+                if isinstance(value, dict):
+                    list_formated_keys = self._get_setting_varibles_names_for_env(
+                        data=value
+                    )
+                    for item_formatted_keys in list_formated_keys:
+                        if formated_key in ("OPENCTI", "CONNECTOR"):
+                            keys.append(f"{formated_key}_{item_formatted_keys}")
+                        else:
+                            keys.append(f"{formated_key}__{item_formatted_keys}")
+                else:
+                    keys.append(formated_key)
+        return keys
+
+    def _get_setting_varibles_names_for_yml(self, data: list[str]) -> dict:
+        keys = {}
+        for env_key in data:
+            if "OPENCTI" in env_key or "CONNECTOR" in env_key:
+                formated_keys = env_key.lower().split("_")
+            else:
+                formated_keys = env_key.lower().split("__")
+            if len(formated_keys) > 2 and formated_keys[2] == "collections":
+                formated_keys[3] = self.collection_map.get(formated_keys[3])
+            keys.update({env_key: formated_keys})
+        return keys
+
+    def _initialize_configurations(self) -> None:
+        """
+        Connector configuration variables
+        :return: None
+        """
+
+        for setting_variable in self.setting_varibles_names_for_env:
+            attr_name = setting_variable.lower().replace("__", "_")
+            attr_value = get_config_variable(
+                env_var=setting_variable,
+                yaml_path=setting_variable.split("__"),
+                config=self.load,
+            )
+            setattr(self, attr_name, attr_value)
+
+    def get_collection_settings(self, collection, setting_name) -> Any:
+        collection_attr_name = f"ti_api_collections_{collection}_{setting_name}"
+        return getattr(self, collection_attr_name)
+
+    def get_extra_settings_by_name(self, setting_name):
+        cextra_setting_attr_name = f"ti_api_extra_settings_{setting_name}"
+        return getattr(self, cextra_setting_attr_name)
 
     # Set up product metadata
     PRODUCT_TYPE = "SCRIPT"
@@ -35,14 +162,10 @@ class Config(object):
     LOGS_WARNING_FILENAME = "warning_ti.log"
 
     # Set up config filename
-    _config_name_yml = "endpoints_config.yaml"
     _config_name_json = "mapping.json"
-    _q_config_name_json = "qmapping.json"
 
     # Set up configs
-    CONFIG_YML = os.path.join(DOCS_DIR, "configs", _config_name_yml)
     CONFIG_JSON = os.path.join(DOCS_DIR, "configs", _config_name_json)
-    Q_CONFIG_JSON = os.path.join(DOCS_DIR, "configs", _q_config_name_json)
 
     # Set up MITRE Matrix
     MITRE_CACHE_FILENAME = "mitre_cache.json"

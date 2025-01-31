@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 import pycti  # type: ignore
 import stix2
-from config import Config
+from config import ConfigConnector
 
 
 class ConversionError(Exception):
@@ -86,19 +86,19 @@ class _CommonUtils:
     def _generate_tlp_obj(color):
         # type: (str) -> Any
         """Generate TLP object"""
-        return Config.STIX_TLP_MAP.get(color.lower())
+        return ConfigConnector.STIX_TLP_MAP.get(color.lower())
 
     @staticmethod
     def _generate_main_observable_type(obj_type):
         # type: (str) -> str
         """Generate TLP object"""
-        return Config.STIX_MAIN_OBSERVABLE_TYPE_MAP.get(obj_type)
+        return ConfigConnector.STIX_MAIN_OBSERVABLE_TYPE_MAP.get(obj_type)
 
     @staticmethod
     def _generate_malware_type(obj_type):
         # type: (str) -> Optional[str, None]
         """Generate Malware type object"""
-        if obj_type.lower() in Config.STIX_MALWARE_TYPE_MAP:
+        if obj_type.lower() in ConfigConnector.STIX_MALWARE_TYPE_MAP:
             return obj_type.lower()
         else:
             return None
@@ -107,19 +107,19 @@ class _CommonUtils:
     def _generate_country_by_cc(country_code):
         # type: (str) -> str
         """Generate Country by Country Code"""
-        return Config.COUNTRIES.get(country_code)
+        return ConfigConnector.COUNTRIES.get(country_code)
 
     @staticmethod
     def _generate_stix_country_type(country_type):
         # type: (str) -> str
         """Generate STIX2 Country type by Country type"""
-        return Config.COUNTRIES.get(country_type)
+        return ConfigConnector.COUNTRIES.get(country_type)
 
     @staticmethod
     def _generate_stix_report_type(report_type):
         # type: (str) -> str
         """Generate STIX2 Report type by Report type"""
-        return Config.STIX_REPORT_TYPE_MAP.get(report_type)
+        return ConfigConnector.STIX_REPORT_TYPE_MAP.get(report_type)
 
 
 class BaseEntity(_CommonUtils):
@@ -151,8 +151,8 @@ class BaseEntity(_CommonUtils):
     def _generate_author():
         """Generate Author"""
         return stix2.Identity(
-            id=pycti.Identity.generate_id(Config.AUTHOR, "organization"),
-            name=Config.AUTHOR,
+            id=pycti.Identity.generate_id(ConfigConnector.AUTHOR, "organization"),
+            name=ConfigConnector.AUTHOR,
             identity_class="organization",
         )
 

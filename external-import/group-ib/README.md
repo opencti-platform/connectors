@@ -95,7 +95,7 @@ The ones that follow are connector's generic execution parameters expected to be
 |------------------------------|----------------------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `connector_confidence_level` | `CONNECTOR_CONFIDENCE_LEVEL`     | Yes       | The default confidence level for created sightings (a number between 1 and 4).                                                                                                |
 | `connector_log_level`        | `CONNECTOR_LOG_LEVEL`            | Yes       | The log level for this connector, could be `debug`, `info`, `warn` or `error` (less verbose).                                                                                 |
-| `interval`                   | `CONNECTOR_RUN_EVERY`            | Yes       | The time unit is represented by a single character at the end of the string: d for days, h for hours, m for minutes, and s for seconds. e.g., 30s is 30 seconds. 1d is 1 day. |
+| `interval`                   | `CONNECTOR__DURATION_PERIOD`            | Yes       | The time unit is represented by a single character at the end of the string: d for days, h for hours, m for minutes, and s for seconds. e.g., 30s is 30 seconds. 1d is 1 day. |
 | `update_existing_data`       | `CONNECTOR_UPDATE_EXISTING_DATA` | Yes       | Whether to update known existing data.                                                                                                                                        |
 
 

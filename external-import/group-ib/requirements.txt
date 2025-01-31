@@ -1,3 +1,4 @@
 pycti==6.4.10
 python-dotenv==1.0.1
 stix2==3.0.1
+isodate==0.7.2

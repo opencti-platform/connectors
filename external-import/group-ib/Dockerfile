@@ -12,6 +12,7 @@ RUN rm -rf /var/cache/apk/*
 COPY src /opt/connector/src
 COPY docs /opt/connector/docs
 WORKDIR /opt/connector/src
+COPY .env /opt/connector/src/
 
 # Install TI API lib
 RUN pip3 install /opt/connector/src/lib/cyberintegrations-0.6.6-py3-none-any.whl

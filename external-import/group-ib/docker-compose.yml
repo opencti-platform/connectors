@@ -2,7 +2,7 @@ version: '3'
 services:
   connector:
     build: .
-    container_name: ${CONTAINER_NAME}
+    container_name: ${CONNECTOR_DOCKER_CONTAINER_NAME}
     image: opencti/connector-group-ib:6.3.1
     volumes:
       - ./docs/:/opt/connector/docs/
@@ -16,17 +16,17 @@ services:
       - CONNECTOR_ID=${CONNECTOR_ID}
       - CONNECTOR_CONFIDENCE_LEVEL=${CONNECTOR_CONFIDENCE_LEVEL} # From 0 (Unknown) to 100 (Fully trusted).
       - CONNECTOR_LOG_LEVEL=${CONNECTOR_LOG_LEVEL}
-      - CONNECTOR_RUN_EVERY=${CONNECTOR_RUN_EVERY}
+      - CONNECTOR_DURATION_PERIOD=${CONNECTOR_DURATION_PERIOD}
       # Connector's TI API execution parameters:
-      - TI_API_URL=${TI_API_URL}
-      - TI_API_USERNAME=${TI_API_USERNAME}
-      - TI_API_TOKEN=${TI_API_TOKEN}
+      - TI_API__URL=${TI_API__URL}
+      - TI_API__USERNAME=${TI_API__USERNAME}
+      - TI_API__TOKEN=${TI_API__TOKEN}
       # Connector's proxy parameters:
-      - PROXY_IP=${PROXY_IP}
-      - PROXY_PORT=${PROXY_PORT}
-      - PROXY_PROTOCOL=${PROXY_PROTOCOL}
-      - PROXY_USERNAME=${PROXY_USERNAME}
-      - PROXY_PASSWORD=${PROXY_PASSWORD}
+      - TI_API__PROXY__IP=${TI_API__PROXY__IP}
+      - TI_API__PROXY__PORT=${TI_API__PROXY__PORT}
+      - TI_API__PROXY__PROTOCOL=${TI_API__PROXY__PROTOCOL}
+      - TI_API__PROXY__USERNAME=${TI_API__PROXY__USERNAME}
+      - TI_API__PROXY__PASSWORD=${TI_API__PROXY__PASSWORD}
     restart: always
 
 networks:

@@ -1,6 +1,6 @@
-# import os
 import sys
 import time
+from traceback import format_exc
 
 # WARN: python-dotenv is used for integration manual run
 import dotenv
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     try:
         connector = CustomConnector()
         connector.run()
-    except Exception as e:
-        print(e)
+    except Exception:
+        print(format_exc())
         time.sleep(10)
         sys.exit(0)

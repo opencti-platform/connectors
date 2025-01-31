@@ -132,6 +132,7 @@ dmypy.json
 
 # Custom ignore
 cache
+*.DS_Store
 
 # Pycharm
 .idea
