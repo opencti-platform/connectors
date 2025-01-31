@@ -19,4 +19,5 @@ services:
       - URLSCAN_ENRICHMENT_VISIBILITY=public # Available values : public, unlisted, private
       - URLSCAN_ENRICHMENT_SEARCH_FILTERED_BY_DATE=>now-1y # Available : ">now-1h", ">now-1d", ">now-1y", "[2022 TO 2023]", "[2022/01/01 TO 2023/12/01]"
       - URLSCAN_ENRICHMENT_MAX_TLP=TLP:AMBER # Required, Available values: TLP:CLEAR, TLP:WHITE, TLP:GREEN, TLP:AMBER, TLP:AMBER+STRICT, TLP:RED
+      - URLSCAN_ENRICHMENT_CREATE_INDICATOR=true
     restart: always

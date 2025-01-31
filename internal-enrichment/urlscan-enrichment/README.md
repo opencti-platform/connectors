@@ -45,6 +45,7 @@ Below are the parameters you'll need to set for URLScan Enrichment connector:
 | URLScan Enr. Visibility              | visibility              | `URLSCAN_ENRICHMENT_VISIBILITY`                   | `public`  | Yes        | URLScan offers several levels of visibility for submitted scans: `public`, `unlisted`, `private`                        |
 | URLScan Enr. Search filtered by date | search_filtered_by_date | `URLSCAN_ENRICHMENT_SEARCH_FILTERED_BY_DATE`      | `>now-1y` | Yes        | Allows you to filter by date available: `>now-1h`, `>now-1d`, `>now-1y`, `[2022 TO 2023]`, `[2022/01/01 TO 2023/12/01]` |
 | URLScan Enr. Max TLP                 | max_tlp                 | `URLSCAN_ENRICHMENT_MAX_TLP`                      | /         | Yes        | Do not send any data to URLScan if the TLP of the observable is greater than MAX_TLP                                    |
+| URLScan Enr. Create Indicator        | create_indicator        | `URLSCAN_ENRICHMENT_CREATE_INDICATOR`             | `true`    | No         | Decide whether or not to create an indicator based on this observable
 
 
 ## Deployment

@@ -17,3 +17,4 @@ urlscan_enrichment:
   visibility: "public" # Available values : public, unlisted, private
   search_filtered_by_date: ">now-2d" # Available : ">now-1d", ">now-1y", "[2022 TO 2023]", "[2022/01/01 TO 2023/12/01"
   max_tlp: "TLP:AMBER" # Required, Available values: TLP:CLEAR, TLP:WHITE, TLP:GREEN, TLP:AMBER, TLP:AMBER+STRICT, TLP:RED
+  create_indicator: true

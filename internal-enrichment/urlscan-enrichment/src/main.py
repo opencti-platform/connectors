@@ -197,26 +197,32 @@ class UrlscanConnector:
 
                     if data_stat["domains"][0] in stix_entity["value"]:
 
-                        stix_indicator = (
-                            self.converter.upsert_stix_indicator_with_relationship(
-                                data,
-                                stix_entity,
-                                external_reference,
-                                labels,
-                                prepared_file_png,
+                        if self.config.create_indicator:
+                            stix_indicator = (
+                                self.converter.upsert_stix_indicator_with_relationship(
+                                    data,
+                                    stix_entity,
+                                    external_reference,
+                                    labels,
+                                    prepared_file_png,
+                                )
                             )
-                        )
-                        self.stix_objects.extend(stix_indicator)
+                            self.stix_objects.extend(stix_indicator)
 
                         for index, ip in enumerate(data_stat["ips"]):
                             if ip is None:
                                 continue
 
-                            # Generate Relationship : Indicator -> "based-on" -> obs_ip
-                            indicator_to_ip = self.converter.generate_stix_relationship(
-                                stix_indicator[0].id, "based-on", stix_obs_ip[index].id
-                            )
-                            self.stix_objects.append(indicator_to_ip)
+                            if self.config.create_indicator:
+                                # Generate Relationship : Indicator -> "based-on" -> obs_ip
+                                indicator_to_ip = (
+                                    self.converter.generate_stix_relationship(
+                                        stix_indicator[0].id,
+                                        "based-on",
+                                        stix_obs_ip[index].id,
+                                    )
+                                )
+                                self.stix_objects.append(indicator_to_ip)
 
                             # Generate Relationship : Observable -> "related-to" -> obs_ip
                             observable_to_ip = (
