@@ -13,4 +13,7 @@ services:
       - CONNECTOR_LOG_LEVEL=error
       - HYGIENE_WARNINGLISTS_SLOW_SEARCH=false # Enable warning lists slow search mode
       - HYGIENE_ENRICH_SUBDOMAINS=false # Enrich subdomains with hygiene_parent label if the parents are found in warninglists
+      - HYGIENE_LABEL_NAME=hygiene
+      - HYGIENE_LABEL_PARENT_NAME="hygiene_parent"
+      - HYGIENE_LABEL_COLOR="#fc0341"
     restart: always

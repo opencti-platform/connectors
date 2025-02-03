@@ -13,3 +13,6 @@ connector:
 
 hygiene:
   warninglists_slow_search: false  # Enable warning lists slow search mode
+  label_name: "hygiene"
+  label_color: "#fc0341"
+  label_parent_name: "hygiene_parent"
