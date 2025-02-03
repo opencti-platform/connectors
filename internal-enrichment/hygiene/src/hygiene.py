@@ -136,6 +136,22 @@ class HygieneConnector:
                 default=False,
             )
         )
+        self.hygiene_label_name = str(
+            get_config_variable(
+                "HYGIENE_LABEL_NAME",
+                ["hygiene", "label_name"],
+                config,
+                default="hygiene",
+            )
+        )
+        self.hygiene_label_parent_name = str(
+            get_config_variable(
+                "HYGIENE_LABEL_PARENT_NAME",
+                ["hygiene", "label_name"],
+                config,
+                default="hygiene_parent",
+            )
+        self.hygiene_label_color = str("#fc0341")
 
         self.helper.log_info(f"Warning lists slow search: {warninglists_slow_search}")
 
@@ -143,7 +159,7 @@ class HygieneConnector:
 
         # Create Hygiene Tag
         self.label_hygiene = self.helper.api.label.read_or_create_unchecked(
-            value="hygiene", color="#fc0341"
+            value=self.hygiene_label_name, color=self.hygiene_label_color
         )
         if self.label_hygiene is None:
             raise ValueError(
@@ -152,7 +168,7 @@ class HygieneConnector:
 
         if self.enrich_subdomains:
             self.label_hygiene_parent = self.helper.api.label.read_or_create_unchecked(
-                value="hygiene_parent", color="#fc0341"
+                value=self.hygiene_label_parent_name, color=self.hygiene_label_color
             )
             if self.label_hygiene_parent is None:
                 raise ValueError(
