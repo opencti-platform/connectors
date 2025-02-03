@@ -151,7 +151,14 @@ class HygieneConnector:
                 config,
                 default="hygiene_parent",
             )
-        self.hygiene_label_color = str("#fc0341")
+        )
+        self.hygiene_label_color = str(
+            get_config_variable(
+                "HYGIENE_LABEL_COLOR",
+                ["hygiene", "label_color"],
+                config,
+                default="#fc0341")
+        )
 
         self.helper.log_info(f"Warning lists slow search: {warninglists_slow_search}")
 
