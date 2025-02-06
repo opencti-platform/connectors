@@ -91,9 +91,7 @@ class Sekoia(object):
         cursor = state.get("last_cursor", self.generate_first_cursor())
         self.helper.log_info(f"Starting with {cursor}")
 
-        timestamp = int(time.time())
-        now = datetime.fromtimestamp(timestamp, timezone.utc)
-        friendly_name = "SEKOIA run @ " + now.strftime("%Y-%m-%d %H:%M:%S")
+        friendly_name = "SEKOIA run @ " + datetime.now(timezone.utc).isoformat()
         try:
             work_id = self.helper.api.work.initiate_work(
                 self.helper.connect_id, friendly_name
