@@ -11,12 +11,16 @@ class AnyrunFeed(ExternalImportConnector):
     def __init__(self):
         super().__init__()
         self.token = os.environ.get("ANYRUN_TI_TOKEN", "")
-        self.ti_url = "https://api.any.run/v1/feeds/stix.json"
+        self.ti_url = os.environ.get("ANYRUN_TI_URL", "https://api.any.run/v1/feeds/stix.json")
 
     def get_feed(self):
         response = requests.get(
             self.ti_url, headers={"Authorization": "API-Key {}".format(self.token)}
         )
+        if response.status_code == 401:
+            response = requests.get(
+                self.ti_url, headers={"Authorization": "Basic {}".format(self.token)}
+            )
         if response.status_code != 200:
             raise ValueError(
                 "Any.RUN api code {}. text: {}".format(
