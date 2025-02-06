@@ -549,14 +549,11 @@ class Sekoia(object):
     def _add_sources_to_items(self, items: List[Dict]):
         object_list = []
         for item in items:
-            if not item.get("x_inthreat_sources_refs"):
-                continue
 
             labels = []
-            sources = self._retrieve_by_ids(
+            for source in self._retrieve_by_ids(
                 item.get("x_inthreat_sources_refs", []), self.get_object_url
-            )
-            for source in sources:
+            ):
                 label_name = "source:" + str(source["name"])
                 label_name = label_name.lower()
                 if label_name not in self.all_labels:
