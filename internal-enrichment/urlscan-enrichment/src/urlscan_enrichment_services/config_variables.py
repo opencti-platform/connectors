@@ -79,3 +79,10 @@ class UrlscanConfig:
         self.max_tlp = get_config_variable(
             "URLSCAN_ENRICHMENT_MAX_TLP", ["urlscan_enrichment", "max_tlp"], self.load
         )
+
+        self.create_indicator = get_config_variable(
+            "URLSCAN_ENRICHMENT_CREATE_INDICATOR",
+            ["urlscan_enrichment", "create_indicator"],
+            self.load,
+            default="true",
+        )
