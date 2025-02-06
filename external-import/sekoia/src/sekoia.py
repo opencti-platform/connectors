@@ -554,8 +554,7 @@ class Sekoia(object):
             for source in self._retrieve_by_ids(
                 item.get("x_inthreat_sources_refs", []), self.get_object_url
             ):
-                label_name = "source:" + str(source["name"])
-                label_name = label_name.lower()
+                label_name = f'source:{source["name"]}'.lower()
                 if label_name not in self.all_labels:
                     self._create_custom_label(label_name, "#f8c167")
 
