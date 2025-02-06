@@ -1,0 +1,19 @@
+opencti:
+  url: 'http://localhost:8080'
+  token: 'ChangeMe'
+
+connector:
+  id: 'ChangeMe'
+  type: 'STREAM'
+  live_stream_id: 'live' # ID of the live stream created in the OpenCTI UI
+  live_stream_listen_delete: true
+  live_stream_no_dependencies: true
+  name: 'Infoblox Threat Defense'
+  scope: 'infoblox threat defense' # Reserved
+  confidence_level: 100 # From 0 (Unknown) to 100 (Fully trusted)
+  log_level: 'info'
+
+infoblox:
+  api_key: 'ChangeMe' 
+  verify_ssl: true
+  custom_list_id: 'ChangeMe' # Custom List ID in Infoblox
