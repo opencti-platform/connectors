@@ -1,0 +1,40 @@
+version: '3'
+services:
+  connector-bambenek:
+    image: opencti/connector-bambenek:6.4.6
+    environment:
+      # Connector's generic execution parameters
+      - OPENCTI_URL=http://localhost
+      - OPENCTI_TOKEN=CHANGEME
+      # Connector's definition parameters REQUIRED
+      - CONNECTOR_ID=CHANGEME
+      - CONNECTOR_NAME=Bambenek
+      - CONNECTOR_SCOPE=ipv4-addr,ipv6-addr,domain,indicator
+      - CONNECTOR_LOG_LEVEL=error
+      - CONNECTOR_DURATION_PERIOD=PT1H # ISO8601 format in String, start with 'P...' for Period
+
+      # Connector's definition parameters OPTIONAL
+      # - CONNECTOR_QUEUE_THRESHOLD=500 # Default 500Mo, Float accepted
+      # - CONNECTOR_RUN_AND_TERMINATE=False # Default False, True run connector once
+      # - CONNECTOR_SEND_TO_QUEUE=True # Default True
+      # - CONNECTOR_SEND_TO_DIRECTORY=False # Default False
+      # - CONNECTOR_SEND_TO_DIRECTORY_PATH=CHANGEME # if CONNECTOR_SEND_TO_DIRECTORY is True, you must specify a path
+      # - CONNECTOR_SEND_TO_DIRECTORY_RETENTION=7 # Default 7, in days
+
+      # Connector's custom execution parameters
+      - BAMBENEK_USERNAME=CHANGEME
+      - BAMBENEK_PASSWORD=CHANGEME
+      - BAMBENEK_COLLECTIONS=c2_dga,c2_dga_high_conf,c2_domain,c2_domain_highconf,c2_ip,c2_ip_highconf
+
+      # Add proxy parameters below if needed
+      # - HTTP_PROXY=CHANGEME
+      # - HTTPS_PROXY=CHANGEME
+      # - NO_PROXY=CHANGEME
+    restart: always
+    # networks:
+    #   - docker_default
+
+# networks:
+#   default:
+#     external: true
+#     name: docker_default
