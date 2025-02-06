@@ -1,0 +1,126 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proofpoint-tap"
+description = "Proofpoint TAP integration."
+readme = "README.md"
+dynamic = ["version"]
+classifiers = [
+    #   4 - Beta
+    #   5 - Production/Stable
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    ]
+
+requires-python = ">=3.11, <3.13" 
+
+dependencies = [
+"aiohttp >=3.7.4, <4",
+"aiohttp-retry >=2.8.1, <3",
+"pydantic[email] >=2.8, <3",
+"stix2 >=3.0.1, <4",
+"yarl >=1.10.1, <2",
+"python-dotenv >=1.0.1, <2",
+"pycti >=6.4, <7",
+"PyYAML >=6.0.2, < 7",
+"pytablewriter >=1.2, < 2",
+]
+
+
+[project.optional-dependencies]
+test= [
+    "pytest >=8.1.1, <9",   
+    "pytest-asyncio >=0.16, <1",
+]
+dev = [
+    "black >=25.1, <26",  # Code formatter
+    "isort >=6, <7",  # Import sorter
+    "ruff >=0.7.2, <1",  # linter
+    "mypy >=1.13.0, <2",  # Type validator
+    "pip_audit >=2, <3",  # Security checker
+    "types-PyYAML", # stubs for untyped module
+]
+all = [
+    "proofpoint_tap[test,dev]"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.dynamic]
+version = {attr = "proofpoint_tap.__version__"}
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+target-version = ['py312']
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    # "tests"
+]
+
+target-version = "py312"
+
+[tool.ruff.lint]
+# Never enforce `E501` (line length violations). Already handle with black
+# Never enforce `F821` (Undefined name `null`). incorrect issue with notebook
+# Never enforce `D213` (Multi-line docstring summary should start at the second line) conflict with our docstring convention
+# Never enforce `D211` (NoBlankLinesBeforeClass)`
+# Never enforce `G004` (logging-f-string) Logging statement uses f-string
+# Never enforce `TRY003`() Avoid specifying long messages outside the exception class not useful
+# Never enforce `D104` (Missing docstring in public package) 
+# Never enforce `D407` (Missing dashed underline after section) 
+# Never enforce `D408` (Section underline should be in the line following the section’s name) 
+# Never enforce `D409` (Section underline should match the length of its name)
+ignore = ["D203", "E501", "F821", "D205", "D213" , "D211", "G004", "TRY003", "D104", "D407", "D408", "D409"]
+select = ["E", "F", "W", "D", "G", "T", "B", "C", "N", "I", "S"]
+
+[tool.mypy]
+strict = true
+exclude = [
+    '^tests', 
+    '^docs',
+    '^build',
+    '^dist',
+    '^venv',
+    '^site-packages',
+    '^__pypackages__',
+    '^.venv',
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "end_to_end: mark a test as an end-to-end test"
+]
+asyncio_default_fixture_loop_scope = "function"
