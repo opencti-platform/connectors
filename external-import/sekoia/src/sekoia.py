@@ -174,7 +174,7 @@ class Sekoia(object):
 
     def _run(self, cursor, work_id):
 
-        current_time = f"{datetime.now(timezone.utc).isoformat()}Z"
+        current_time = f"{datetime.now(timezone.utc).isoformat()}"
         current_cursor = base64.b64encode(current_time.encode("utf-8")).decode("utf-8")
 
         params = {"limit": self.limit, "cursor": cursor}
