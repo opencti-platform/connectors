@@ -29,6 +29,7 @@ connector-sekoia:
       - SEKOIA_COLLECTION=d6092c37-d8d7-45c3-8aff-c4dc26030608
       - SEKOIA_START_DATE=2022-01-01    # Optional, the date to start consuming data from. Maybe in the formats YYYY-MM-DD or YYYY-MM-DDT00:00:00
       - SEKOIA_CREATE_OBSERVABLES=true  # Create observables from indicators
+      - SEKOIA_IMPORT_SOURCE_LIST=false # Create the list of sources observed by Sekoia as label
     restart: always
     depends_on:
       - opencti
@@ -75,13 +76,13 @@ On this page, you can find the following information:
 2. Navigate the Sekoia Intelligence Feed
 Here are the elements of the Sekoia feed that can be found on OpenCTI after export:
 
-| **OpenCTI**   |	**Sekoia.io**  |
-|---------------|----------------|
-| Reports       | Threat-reports |
-| Observables   | Sightings      |
-| Malwares	    | Malwares       |
-| Intrusion Set	| Intrusion-sets |
-| Indicators	  | Indicators     |
+| **OpenCTI**    | 	**Sekoia.io** |
+|----------------|----------------|
+| Reports        | Threat-reports |
+| Observables    | Sightings      |
+| Malwares	      | Malwares       |
+| Intrusion Set	 | Intrusion-sets |
+| Indicators	    | Indicators     |
 
 ## Troubleshoot
 
