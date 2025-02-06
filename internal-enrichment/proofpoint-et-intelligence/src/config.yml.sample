@@ -1,0 +1,16 @@
+opencti:
+  url: 'http://localhost:PORT'
+  token: 'ChangeMe'
+
+connector:
+  id: 'ChangeMe'
+  name: 'ProofPoint ET Intelligence'
+  scope: 'IPv4-Addr,Domain-Name,StixFile'
+  log_level: 'info'
+  auto: true # Enable/disable auto-enrichment of observables
+
+proofpoint_et_intelligence:
+  api_base_url: 'https://api.emergingthreats.net/v1/'
+  api_key: 'ChangeMe'
+  max_tlp: "TLP:AMBER" # Available values: TLP:CLEAR, TLP:WHITE, TLP:GREEN, TLP:AMBER, TLP:AMBER+STRICT, TLP:RED
+  import_last_seen_time_window: "P30D"

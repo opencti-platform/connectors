@@ -1,0 +1,10 @@
+[tool.pytest.ini_options]
+log_cli = true
+pythonpath = [
+    "src",
+    "tests",
+]
+testpaths = [
+    "tests",
+]
+#addopts = "-s"

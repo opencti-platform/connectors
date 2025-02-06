@@ -1,0 +1,4 @@
+# Main dependencies needs to be installed
+-r ../src/requirements.txt
+pytest
+pytest-mock
