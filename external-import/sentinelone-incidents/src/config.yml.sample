@@ -1,0 +1,22 @@
+opencti:
+  url: 'http://localhost:PORT'
+  token: 'ChangeMe'
+
+connector:
+  id: 'ChangeMe'
+  type: 'EXTERNAL_IMPORT'
+  name: 'SentinelOne Incident Connector'
+  scope: 'ChangeMe'
+  log_level: 'info'
+  duration_period: 'PT5M' # Interval given for scheduler process in ISO-8601 format
+
+sentinelOne:
+  url: 'change Me Ending In/'
+  api_key: 'ChangeMe'
+  account_id: 'ChangeMe'
+  max_api_attempts: 5
+  search_sign: "[OpenCTI_add]"
+
+
+
+
