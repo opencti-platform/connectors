@@ -1,0 +1,7 @@
+pycti==6.5.0
+requests
+stix2
+python-dotenv
+python-magic
+pymispwarninglists
+pandas
