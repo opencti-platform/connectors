@@ -1,19 +1,51 @@
-FROM python:3.12.5-alpine
+# syntax=docker/dockerfile:1
+
+ARG PYTHON_VERSION=3.12.5
+FROM python:${PYTHON_VERSION}-alpine as base
+
 ENV CONNECTOR_TYPE=EXTERNAL_IMPORT
 
-# Copy the connector
-COPY src /opt/opencti-connector-vulncheck
+# Prevents Python from writing pyc files.
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# Install Python modules
-# hadolint ignore=DL3003
+# Keeps Python from buffering stdout and stderr to avoid situations where
+# the application crashes without emitting any logs due to buffering.
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Create a non-privileged user that the app will run under.
+# See https://docs.docker.com/go/dockerfile-user-best-practices/
+ARG UID=10001
+RUN adduser \
+  --disabled-password \
+  --gecos "" \
+  --home "/nonexistent" \
+  --shell "/sbin/nologin" \
+  --no-create-home \
+  --uid "${UID}" \
+  appuser
+
+# Give the appuser permisions to manipulate the workdir
+RUN chown appuser /app
+
+# Install dependencies
 RUN apk update && apk upgrade && \
   apk --no-cache add git build-base libmagic libffi-dev libxml2-dev libxslt-dev
 
-RUN cd /opt/opencti-connector-vulncheck && \
-  pip3 install --no-cache-dir -r requirements.txt && \
-  apk del git build-base
+# Leverage a bind mount to requirements.txt to avoid having to copy them into
+# into this layer.
+RUN --mount=type=bind,source=src/requirements.txt,target=requirements.txt \
+  python -m pip install --no-cache-dir -r requirements.txt
 
-# Expose and entrypoint
-COPY entrypoint.sh /
-RUN chmod +x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+# Remove dependencies for pip installing after completed
+RUN apk del git build-base
+
+# Switch to the non-privileged user to run the application.
+USER appuser
+
+# Copy the connector
+COPY src .
+
+# Execute the connector
+CMD [ "python", "main.py" ]
