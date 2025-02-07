@@ -1,17 +1,17 @@
 from enum import Enum
 
-from .botnets import collect_botnets
-from .epss import collect_epss
-from .exploits import collect_exploits
-from .initial_access import collect_initial_access
-from .ipintel import collect_ipintel
-from .nistnvd2 import collect_nistnvd2
-from .ransomware import collect_ransomware
-from .snort import collect_snort
-from .suricata import collect_suricata
-from .threat_actors import collect_threat_actors
-from .vckev import collect_vckev
-from .vcnvd2 import collect_vcnvd2
+from vclib.sources.botnets import collect_botnets
+from vclib.sources.epss import collect_epss
+from vclib.sources.exploits import collect_exploits
+from vclib.sources.initial_access import collect_initial_access
+from vclib.sources.ipintel import collect_ipintel
+from vclib.sources.nistnvd2 import collect_nistnvd2
+from vclib.sources.ransomware import collect_ransomware
+from vclib.sources.snort import collect_snort
+from vclib.sources.suricata import collect_suricata
+from vclib.sources.threat_actors import collect_threat_actors
+from vclib.sources.vckev import collect_vckev
+from vclib.sources.vcnvd2 import collect_vcnvd2
 
 BOTNETS = "botnets"
 EPSS = "epss"

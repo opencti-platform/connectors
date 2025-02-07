@@ -1,40 +1,65 @@
+from pycti import OpenCTIConnectorHelper
 from stix2.v21.vocab import PATTERN_TYPE_SNORT
 
-# from vclib.connector import ConnectorVulnCheck
-from .util import RuleParser
+import vclib.util.works as works
+from vclib.models.rule import Rule, RuleParser
+from vclib.util.config import SCOPE_INDICATOR, compare_config_to_target_scope
 
 
-def collect_snort(conn, config_state: dict) -> list:
-    """Collect all snort rules
-
-    Args:
-        conn (ConnectorVulnCheck): The VulnCheck connector
-
-    Returns:
-        list: A list of STIX objects
-    """
-    conn.helper.connector_logger.info("[SNORT] Starting collection")
-    rule_string = conn.client.get_rules("snort")
-
-    conn.helper.connector_logger.info("[SNORT] Parsing rules")
-    rule_parser = RuleParser()
-    snort_rules = rule_parser.parse(rule_string, conn.helper)
-
-    stix_objects = []
-
-    conn.helper.connector_logger.info("[SNORT] Parsing data into STIX objects")
-    for snort_rule in snort_rules:
-        conn.helper.connector_logger.debug(
-            "[SNORT] Creating indicator object",
-            {"rule_name": snort_rule.name},
-        )
-        indicator = conn.converter_to_stix.create_indicator(
+def _extract_stix_from_snort(
+    converter_to_stix, logger, snort_rules: list[Rule]
+) -> list:
+    logger.info("[SNORT] Parsing data into STIX objects")
+    return [
+        converter_to_stix.create_indicator(
             pattern=snort_rule.rule,
             pattern_type=PATTERN_TYPE_SNORT,
             name=snort_rule.name,
             description=snort_rule.description,
         )
-        stix_objects.append(indicator)
+        for snort_rule in snort_rules
+    ]
 
-    conn.helper.connector_logger.info("[SNORT] Data Source Completed!")
-    return stix_objects
+
+def collect_snort(
+    config,
+    helper: OpenCTIConnectorHelper,
+    client,
+    converter_to_stix,
+    logger,
+    _: dict,
+) -> None:
+    # Check if data source is in scope for this run
+    source_name = "Snort"
+    target_scope = [SCOPE_INDICATOR]
+    target_scope = compare_config_to_target_scope(
+        config=config,
+        target_scope=target_scope,
+        name=source_name.upper(),
+        logger=logger,
+    )
+
+    if target_scope == []:
+        logger.info("[SNORT] Snort is out of scope, skipping")
+        return
+
+    logger.info("[SNORT] Starting collection")
+    rule_string = client.get_rules("snort")
+
+    # Initiate new work
+    work_id = works.start_work(helper=helper, logger=logger, work_name=source_name)
+
+    stix_objects = _extract_stix_from_snort(
+        converter_to_stix=converter_to_stix,
+        snort_rules=RuleParser().parse(rule_string, logger),
+        logger=logger,
+    )
+
+    works.finish_work(
+        helper=helper,
+        logger=logger,
+        stix_objects=stix_objects,
+        work_id=work_id,
+        work_name=source_name,
+    )
+    logger.info("[SNORT] Data Source Completed!")

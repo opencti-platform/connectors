@@ -1,51 +1,128 @@
-from datetime import datetime
+import stix2
+from pycti import OpenCTIConnectorHelper
+from vulncheck_sdk.models.advisory_ransomware_exploit import AdvisoryRansomwareExploit
 
-# from vclib.connector import ConnectorVulnCheck
+import vclib.util.works as works
+from vclib.util.config import (
+    SCOPE_MALWARE,
+    SCOPE_VULNERABILITY,
+    compare_config_to_target_scope,
+)
 
 
-def collect_ransomware(conn, config_state: dict) -> list:
-    """Collect all data for the ransomware source
+def _create_malware(
+    converter_to_stix, entity: AdvisoryRansomwareExploit, logger
+) -> stix2.Malware:
+    logger.debug(
+        "[RANSOMWARE] Creating malware object",
+        {"ransomware_name": entity.ransomware_family},
+    )
+    return converter_to_stix.create_malware(
+        name=entity.ransomware_family,
+        is_family=True,
+        first_seen=entity.date_added,
+    )
 
-    Args:
-        conn (ConnectorVulnCheck): The VulnCheck connector
 
-    Returns:
-        list: A list of STIX objects
-    """
-    conn.helper.connector_logger.info("[RANSOMWARE] Starting collection")
-    entities = conn.client.get_ransomware()
-    stix_objects = []
+def _create_vuln(converter_to_stix, cve: str, logger) -> stix2.Vulnerability:
+    logger.debug(
+        "[RANSOMWARE] Creating vulnerability object",
+        {"cve": cve},
+    )
+    return converter_to_stix.create_vulnerability(cve=cve)
 
-    conn.helper.connector_logger.info("[RANSOMWARE] Parsing data into STIX objects")
+
+def _create_rel_exploits(
+    malware: stix2.Malware,
+    vulnerability: stix2.Vulnerability,
+    converter_to_stix,
+    logger,
+) -> stix2.Relationship:
+    logger.debug(
+        '[RANSOMWARE] Creating "exploits" relationship',
+    )
+    return converter_to_stix.create_relationship(
+        source_id=malware["id"],
+        relationship_type="exploits",
+        target_id=vulnerability["id"],
+    )
+
+
+def _extract_stix_from_ransomware(
+    converter_to_stix,
+    entities: list[AdvisoryRansomwareExploit],
+    target_scope: list[str],
+    logger,
+) -> list:
+    result = []
+
+    logger.info("[RANSOMWARE] Parsing data into STIX objects")
     for entity in entities:
-        conn.helper.connector_logger.debug(
-            "[RANSOMWARE] Creating malware object",
-            {"ransomware_name": entity.ransomware_family},
-        )
-        malware = conn.converter_to_stix.create_malware(
-            name=entity.ransomware_family,
-            is_family=True,
-            first_seen=datetime.fromisoformat(entity.date_added),
-        )
+        malware = None
 
-        stix_objects.append(malware)
+        if SCOPE_MALWARE in target_scope:
+            malware = _create_malware(converter_to_stix, entity, logger)
+            result.append(malware)
 
-        if entity.cve is not None:
+        if SCOPE_VULNERABILITY and entity.cve is not None:
             for cve in entity.cve:
-                conn.helper.connector_logger.debug(
-                    "[RANSOMWARE] Creating vulnerability object",
-                    {"cve": cve},
+                vuln = _create_vuln(
+                    converter_to_stix=converter_to_stix,
+                    cve=cve,
+                    logger=logger,
                 )
-                vuln = conn.converter_to_stix.create_vulnerability(cve)
+                result.append(vuln)
+                if malware is not None:
+                    result.append(
+                        _create_rel_exploits(
+                            malware=malware,
+                            vulnerability=vuln,
+                            converter_to_stix=converter_to_stix,
+                            logger=logger,
+                        )
+                    )
+    return result
 
-                conn.helper.connector_logger.debug(
-                    '[RANSOMWARE] Creating "exploits" relationship',
-                )
-                malware_vuln_relationship = conn.converter_to_stix.create_relationship(
-                    malware["id"], "exploits", vuln["id"]
-                )
-                stix_objects.append(vuln)
-                stix_objects.append(malware_vuln_relationship)
 
-    conn.helper.connector_logger.info("[RANSOMWARE] Data Source Completed!")
-    return stix_objects
+def collect_ransomware(
+    config,
+    helper: OpenCTIConnectorHelper,
+    client,
+    converter_to_stix,
+    logger,
+    _: dict,
+) -> None:
+    source_name = "Ransomware"
+    target_scope = [SCOPE_VULNERABILITY, SCOPE_MALWARE]
+    target_scope = compare_config_to_target_scope(
+        config=config,
+        target_scope=target_scope,
+        name=source_name.upper(),
+        logger=logger,
+    )
+
+    if target_scope == []:
+        logger.info("[RANSOMWARE] Ransomware is out of scope, skipping")
+        return
+
+    logger.info("[RANSOMWARE] Starting collection")
+    entities = client.get_ransomware()
+
+    # Initiate new work
+    work_id = works.start_work(helper=helper, logger=logger, work_name=source_name)
+
+    stix_objects = _extract_stix_from_ransomware(
+        converter_to_stix=converter_to_stix,
+        entities=entities,
+        target_scope=target_scope,
+        logger=logger,
+    )
+
+    works.finish_work(
+        helper=helper,
+        logger=logger,
+        stix_objects=stix_objects,
+        work_id=work_id,
+        work_name=source_name,
+    )
+    logger.info("[RANSOMWARE] Data Source Completed!")

@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 from pycti import get_config_variable
 
-from vclib.sources.data_source import DataSource
+from vclib.models.data_source import DataSource
 
 
 class ConfigConnector:
@@ -40,7 +40,12 @@ class ConfigConnector:
         # OpenCTI configurations
         self.duration_period = get_config_variable(
             "CONNECTOR_DURATION_PERIOD",
-            ["connector_vulncheck", "duration_period"],
+            ["connector", "duration_period"],
+            self.load,
+        )
+        self.scope = get_config_variable(
+            "CONNECTOR_SCOPE",
+            ["connector", "scope"],
             self.load,
         )
 
@@ -63,6 +68,3 @@ class ConfigConnector:
             self.load,
             default=DataSource.get_all_data_source_strings(),
         )
-
-    def get_configured_sources(self) -> list[str]:
-        return self.data_sources.split(",")

@@ -1,14 +1,9 @@
-import gzip
-import json
-import os
-import zipfile
 from datetime import datetime, timedelta
 from typing import Any, Callable, List
 
 import requests
 import vulncheck_sdk
 from pycti import OpenCTIConnectorHelper
-from pydantic import ValidationError
 from vulncheck_sdk.models.advisory_botnet import AdvisoryBotnet
 from vulncheck_sdk.models.advisory_ip_intel_record import AdvisoryIpIntelRecord
 from vulncheck_sdk.models.advisory_ransomware_exploit import AdvisoryRansomwareExploit
@@ -23,7 +18,7 @@ from vulncheck_sdk.models.api_nvd20_cve import ApiNVD20CVE
 from vulncheck_sdk.models.api_nvd20_cve_extended import ApiNVD20CVEExtended
 
 from vclib.config_variables import ConfigConnector
-from vclib.sources import data_source
+from vclib.models import data_source
 
 
 class ConnectorClient:
@@ -86,7 +81,7 @@ class ConnectorClient:
                 data_source.NIST_NVD2,
                 data_source.VULNCHECK_KEV,
             ],
-            "evi": [
+            "ia-exploit": [
                 data_source.BOTNETS,
                 data_source.EPSS,
                 data_source.EXPLOITS,
@@ -279,78 +274,29 @@ class ConnectorClient:
 
             return api_response
 
-    def get_vcnvd2_from_backup(self) -> list[ApiNVD20CVEExtended]:
+    def get_vcnvd2_backup_filepath(self) -> str:
         self.helper.connector_logger.info(
             "[API] Downloading backup for VulnCheck-NVD2..."
         )
         file_path = self._get_backup(data_source.VULNCHECK_NVD2)
         self.helper.connector_logger.info("[API] Backup downloaded for VulnCheck-NVD2")
-        self.helper.connector_logger.info("[API] Parsing VulnCheck-NVD2 Backup...")
+        return file_path
 
-        results = []
-        with zipfile.ZipFile(file_path, "r") as zip_ref:
-            for file_name in zip_ref.namelist():
-                results.extend(self._get_vcnvd2_results_from_json(file_name, zip_ref))
-        self.helper.connector_logger.info("[API] Backup data parsed!")
-        os.remove(file_path)
-        return results
-
-    def _get_vcnvd2_results_from_json(self, file_name, zip_ref):
-        results = []
-        if file_name.endswith(".json"):
-            with zip_ref.open(file_name) as json_file:
-                data = json.load(json_file)
-                for item in data["results"]:
-                    try:
-                        result = ApiNVD20CVEExtended.model_validate(item)
-                        results.append(result)
-                    except ValidationError as e:
-                        self.helper.connector_logger.error(
-                            f"Unable to validate JSON for NIST-NVD2 object, {e}",
-                            {"item": item},
-                        )
-        return results
-
-    def get_nistnvd2_from_backup(self) -> list[ApiNVD20CVE]:
+    def get_nistnvd2_backup_filepath(self) -> str:
         self.helper.connector_logger.info("[API] Downloading backup for NIST-NVD2...")
         file_path = self._get_backup(data_source.NIST_NVD2)
         self.helper.connector_logger.info("[API] Backup downloaded for NIST-NVD2")
-        self.helper.connector_logger.info("[API] Parsing NIST-NVD2 Backup...")
-
-        results = []
-        with zipfile.ZipFile(file_path, "r") as zip_ref:
-            for file_name in zip_ref.namelist():
-                results.extend(self._get_nistnvd2_results_from_json(file_name, zip_ref))
-        self.helper.connector_logger.info("[API] Backup data parsed!")
-        os.remove(file_path)
-        return results
-
-    def _get_nistnvd2_results_from_json(self, file_name, zip_ref):
-        results = []
-        if file_name.endswith(".gz"):
-            with zip_ref.open(file_name) as gz_file:
-                with gzip.open(gz_file) as json_file:
-                    data = json.load(json_file)
-                    for item in data["vulnerabilities"]:
-                        try:
-                            result = ApiNVD20CVE.model_validate(item["cve"])
-                            results.append(result)
-                        except ValidationError as e:
-                            self.helper.connector_logger.error(
-                                f"Unable to validate JSON for NIST-NVD2 object, {e}",
-                                {"item": item},
-                            )
-        return results
+        return file_path
 
     def _get_backup(self, index: str) -> str:
+        file_path = f"{index}.zip"
         with vulncheck_sdk.ApiClient(self.vc_config) as api_client:
             endpoints_client = vulncheck_sdk.EndpointsApi(api_client)
 
             api_response = endpoints_client.backup_index_get(index)
-            backup_url = requests.get(api_response.data[0].url)
+            if api_response.data is not None and api_response.data[0].url:
+                backup_url = requests.get(api_response.data[0].url)
 
-            file_path = f"{index}.zip"
-            with open(file_path, "wb") as file:
-                file.write(backup_url.content)
-
-            return file_path
+                with open(file_path, "wb") as file:
+                    file.write(backup_url.content)
+        return file_path

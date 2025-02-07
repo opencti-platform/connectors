@@ -1,12 +1,21 @@
 import sys
 from datetime import datetime
 
+import stix2
 from pycti import OpenCTIConnectorHelper
+
+import vclib.util.works as works
+from vclib.util.config import (
+    get_configured_sources,
+    get_intersection_of_string_lists,
+    get_time_until_next_run,
+)
+from vclib.util.memory_usage import reset_max_mem
 
 from .config_variables import ConfigConnector
 from .connector_client import ConnectorClient
 from .converter_to_stix import ConverterToStix
-from .sources.data_source import DataSource
+from .models.data_source import DataSource
 
 
 class ConnectorVulnCheck:
@@ -35,27 +44,24 @@ class ConnectorVulnCheck:
         self.converter_to_stix = ConverterToStix(self.helper)
 
     def _collect_intelligence(
-        self, target_data_sources: list[DataSource], config_state
-    ) -> list:
+        self, target_data_sources: list[DataSource], connector_state
+    ):
         """
         Collect intelligence from the source and convert into STIX object
-        :return: List of STIX objects
         """
-        stix_objects = []
-        target_data_sources = self._get_target_data_sources()
-
-        # Make sure the author exists!
-        stix_objects.append(self.converter_to_stix.author)
-
         for source in target_data_sources:
             self.helper.log_info(
                 f"[CONNECTOR] Collecting data for {source.name}",
             )
             # Get entities from source
-            new_stix_objects = source.collect_data_source(self, config_state)
-            stix_objects.extend(new_stix_objects)
-
-        return stix_objects
+            source.collect_data_source(
+                self.config,
+                self.helper,
+                self.client,
+                self.converter_to_stix,
+                self.helper.connector_logger,
+                connector_state,
+            )
 
     def _get_target_data_sources(self) -> list[DataSource]:
         entitled_data_sources = self.client.get_entitled_sources()
@@ -63,14 +69,15 @@ class ConnectorVulnCheck:
             "[CONNECTOR] Entitled Data Sources",
             {"data_sources": entitled_data_sources},
         )
-        configured_data_sources = self.config.get_configured_sources()
+        configured_data_sources = get_configured_sources(self.config)
         self.helper.connector_logger.debug(
             "[CONNECTOR] Configured Data Sources",
             {"data_sources": configured_data_sources},
         )
-        target_data_source_strings = self._get_intersection_of_string_lists(
+        target_data_source_strings = get_intersection_of_string_lists(
             entitled_data_sources, configured_data_sources
         )
+        target_data_source_strings.sort()
 
         target_data_sources: list[DataSource] = []
 
@@ -81,19 +88,21 @@ class ConnectorVulnCheck:
         )
         return target_data_sources
 
-    def _get_intersection_of_string_lists(
-        self, a: list[str], b: list[str]
-    ) -> list[str]:
-        return list(set(a) & set(b))
-
-    def _get_time_until_next_run(self, current_timestamp: int, last_run_timestamp: int):
-        time_diff = current_timestamp - last_run_timestamp
-        if time_diff < 24 * 3600:
-            remaining_time = 24 * 3600 - time_diff
-            hours, remainder = divmod(remaining_time, 3600)
-            minutes, _ = divmod(remainder, 60)
-            return hours, minutes
-        return None, None
+    def _initial_run(self):
+        work_name = "First Run"
+        work_id = works.start_work(self.helper, self.helper.connector_logger, work_name)
+        stix_objects = [
+            stix2.TLP_AMBER,
+            stix2.TLP_WHITE,
+            self.converter_to_stix.author,
+        ]
+        works.finish_work(
+            self.helper,
+            self.helper.connector_logger,
+            stix_objects,
+            work_id,
+            work_name,
+        )
 
     def process_message(self) -> None:
         """
@@ -105,26 +114,27 @@ class ConnectorVulnCheck:
             {"connector_name": self.helper.connect_name},
         )
 
-        work_id = ""
+        # INFO: Reset state for tracking memory usage during large volume data-processing
+        reset_max_mem()
 
         try:
             # Get the current state
             now = datetime.now()
             current_timestamp = int(datetime.timestamp(now))
-            current_state = self.helper.get_state()
+            connector_state = self.helper.get_state()
 
             # Get the target data sources for this run
             target_data_sources = self._get_target_data_sources()
 
-            if current_state is not None and "last_run" in current_state:
-                last_run = current_state["last_run"]
+            if connector_state is not None and "last_run" in connector_state:
+                last_run = connector_state["last_run"]
                 last_run_dt = datetime.strptime(last_run, "%Y-%m-%d %H:%M:%S")
                 last_run_timestamp = int(last_run_dt.timestamp())
 
-                hours, minutes = self._get_time_until_next_run(
+                hours, minutes = get_time_until_next_run(
                     current_timestamp, last_run_timestamp
                 )
-                if hours is not None and minutes is not None:
+                if hours != 0 and minutes != 0:
                     self.helper.connector_logger.info(
                         f"[CONNECTOR] Last data ingest less than 24 hours ago, next ingest in {hours}h{minutes}m",
                     )
@@ -136,40 +146,17 @@ class ConnectorVulnCheck:
                 )
             else:
                 self.helper.connector_logger.info(
-                    "[CONNECTOR] Connector has never run..."
+                    "[CONNECTOR] Connector has never run - doing initial run for base objects"
                 )
+                self._initial_run()
 
             try:
-                # Initiate new work
-                friendly_name = "VulnCheck run @ " + now.strftime("%Y-%m-%d %H:%M:%S")
-                work_id = self.helper.api.work.initiate_work(
-                    self.helper.connect_id, friendly_name
-                )
-
                 self.helper.connector_logger.info(
                     "[CONNECTOR] Running connector...",
                     {"connector_name": self.helper.connect_name},
                 )
 
-                stix_objects = self._collect_intelligence(
-                    target_data_sources, current_state
-                )
-
-                if stix_objects is not None and len(stix_objects) != 0:
-                    self.helper.connector_logger.debug(
-                        "[CONNECTOR] Bundling objects",
-                    )
-                    stix_objects_bundle = self.helper.stix2_create_bundle(stix_objects)
-                    self.helper.connector_logger.info(
-                        "[CONNECTOR] Preparing to send bundle",
-                    )
-                    bundles_sent = self.helper.send_stix2_bundle(
-                        stix_objects_bundle, work_id=work_id
-                    )
-                    self.helper.connector_logger.info(
-                        "[CONNECTOR] Sending STIX objects to OpenCTI...",
-                        {"bundles_sent": {str(len(bundles_sent))}},
-                    )
+                self._collect_intelligence(target_data_sources, connector_state)
 
             except Exception as e:
                 self.helper.log_error(str(e))
@@ -179,25 +166,13 @@ class ConnectorVulnCheck:
                 "[CONNECTOR] Updating connector state for collected data sources",
                 {"current_timestamp": current_timestamp},
             )
-            current_state = self.helper.get_state()
             current_state_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
-            last_run_datetime = datetime.fromtimestamp(current_timestamp).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
 
-            new_state = self.get_updated_state(
+            new_state = self._get_updated_state(
                 target_data_sources, current_state_datetime
             )
 
             self.helper.set_state(new_state)
-
-            message = (
-                f"[CONNECTOR] {self.helper.connect_name} connector successfully ran, storing last_run as "
-                + str(last_run_datetime)
-            )
-
-            self.helper.api.work.to_processed(work_id, message)
-            self.helper.connector_logger.info(message)
 
         except (KeyboardInterrupt, SystemExit):
             self.helper.connector_logger.info(
@@ -208,7 +183,7 @@ class ConnectorVulnCheck:
         except Exception as err:
             self.helper.connector_logger.error(str(err))
 
-    def get_updated_state(
+    def _get_updated_state(
         self, target_data_sources: list[DataSource], current_state_datetime
     ) -> dict:
         new_state = {

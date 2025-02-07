@@ -28,8 +28,8 @@ class ConverterToStix:
 
     def __init__(self, helper):
         self.helper = helper
-        self.author = self.create_author_vc()
         self.external_reference = self.create_external_reference_vc()
+        self.author = self.create_author_vc(self.external_reference)
 
     @staticmethod
     def create_external_reference_vc() -> list[stix2.ExternalReference]:
@@ -46,7 +46,9 @@ class ConverterToStix:
         return [external_reference]
 
     @staticmethod
-    def create_author_vc() -> stix2.Identity:
+    def create_author_vc(
+        external_references: list[stix2.ExternalReference],
+    ) -> stix2.Identity:
         """Create Author
 
         Returns:
@@ -56,8 +58,8 @@ class ConverterToStix:
             id=Identity.generate_id(name="VulnCheck", identity_class="organization"),
             name="VulnCheck",
             identity_class="organization",
+            external_references=external_references,
             description="Unprecedented visibility into the vulnerability ecosystem from the eye of the storm. Prioritize response. Finish taking action before the attacks occur.",
-            object_marking_refs=[stix2.TLP_WHITE],
         )
         return author
 
@@ -85,7 +87,6 @@ class ConverterToStix:
             source_ref=source_id,
             target_ref=target_id,
             created_by_ref=self.author,
-            external_references=self.external_reference,
             object_marking_refs=[stix2.TLP_AMBER],
         )
         return relationship
@@ -160,7 +161,6 @@ class ConverterToStix:
                 object_marking_refs=[stix2.TLP_AMBER],
                 custom_properties={
                     "x_opencti_created_by_ref": self.author.id,
-                    "x_opencti_external_references": self.external_reference,
                 },
             )
             return stix_ipv6_address
@@ -170,7 +170,6 @@ class ConverterToStix:
                 object_marking_refs=[stix2.TLP_AMBER],
                 custom_properties={
                     "x_opencti_created_by_ref": self.author.id,
-                    "x_opencti_external_references": self.external_reference,
                 },
             )
             return stix_ipv4_address
@@ -180,7 +179,6 @@ class ConverterToStix:
                 object_marking_refs=[stix2.TLP_AMBER],
                 custom_properties={
                     "x_opencti_created_by_ref": self.author.id,
-                    "x_opencti_external_references": self.external_reference,
                 },
             )
             return stix_domain_name
@@ -244,6 +242,7 @@ class ConverterToStix:
     def create_vulnerability(
         self,
         cve: str,
+        description: str = "",
         custom_properties: dict = {},
     ) -> stix2.Vulnerability:
         """Create Vulnerability Object
@@ -261,21 +260,32 @@ class ConverterToStix:
             source_name=f"VulnCheck {cve}",
             url=f"https://vulncheck.com/cve/{cve}",
         )
-        stix_vulnerability = stix2.Vulnerability(
-            id=Vulnerability.generate_id(cve),
-            name=cve,
-            created_by_ref=self.author,
-            external_references=[external_ref],
-            object_marking_refs=[stix2.TLP_AMBER],
-            custom_properties=custom_properties,
+        return (
+            stix2.Vulnerability(
+                id=Vulnerability.generate_id(cve),
+                name=cve,
+                description=description,
+                created_by_ref=self.author,
+                external_references=[external_ref],
+                object_marking_refs=[stix2.TLP_AMBER],
+                custom_properties=custom_properties,
+            )
+            if description != ""
+            else stix2.Vulnerability(
+                id=Vulnerability.generate_id(cve),
+                name=cve,
+                created_by_ref=self.author,
+                external_references=[external_ref],
+                object_marking_refs=[stix2.TLP_AMBER],
+                custom_properties=custom_properties,
+            )
         )
-        return stix_vulnerability
 
     def create_malware(
         self,
         name: str,
         is_family: bool,
-        first_seen: datetime,
+        first_seen: str | None,
         description: str = "",
     ) -> stix2.Malware:
         """Create Malware Object
@@ -292,16 +302,26 @@ class ConverterToStix:
         Examples:
             >>> create_malware("WannaCry", "Ransomware", True, datetime.now())
         """
-        malware = stix2.Malware(
-            id=Malware.generate_id(name),
-            name=name,
-            description=description,
-            is_family=is_family,
-            first_seen=first_seen,
-            created_by_ref=self.author,
-            object_marking_refs=[stix2.TLP_AMBER],
+        return (
+            stix2.Malware(
+                id=Malware.generate_id(name),
+                name=name,
+                description=description,
+                is_family=is_family,
+                first_seen=datetime.fromisoformat(first_seen),
+                created_by_ref=self.author,
+                object_marking_refs=[stix2.TLP_AMBER],
+            )
+            if first_seen is not None
+            else stix2.Malware(
+                id=Malware.generate_id(name),
+                name=name,
+                description=description,
+                is_family=is_family,
+                created_by_ref=self.author,
+                object_marking_refs=[stix2.TLP_AMBER],
+            )
         )
-        return malware
 
     def create_software(
         self, product: str, vendor: str, version: str, cpe: str
