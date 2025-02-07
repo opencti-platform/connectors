@@ -1,14 +1,13 @@
 import stix2
+import vclib.util.works as works
 from pycti import OpenCTIConnectorHelper
 from stix2.v21.vocab import INFRASTRUCTURE_TYPE_BOTNET
-from vulncheck_sdk.models.advisory_botnet import AdvisoryBotnet
-
-import vclib.util.works as works
 from vclib.util.config import (
     SCOPE_INFRASTRUCTURE,
     SCOPE_VULNERABILITY,
     compare_config_to_target_scope,
 )
+from vulncheck_sdk.models.advisory_botnet import AdvisoryBotnet
 
 
 def _create_infra(

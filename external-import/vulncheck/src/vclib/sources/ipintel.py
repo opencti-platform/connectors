@@ -1,17 +1,16 @@
 from datetime import datetime
 
 import stix2
+import vclib.util.works as works
 from pycti import OpenCTIConnectorHelper
 from stix2.v21.vocab import INFRASTRUCTURE_TYPE_COMMAND_AND_CONTROL
-from vulncheck_sdk.models.advisory_ip_intel_record import AdvisoryIpIntelRecord
-
-import vclib.util.works as works
 from vclib.util.config import (
     SCOPE_INFRASTRUCTURE,
     SCOPE_IP,
     SCOPE_LOCATION,
     compare_config_to_target_scope,
 )
+from vulncheck_sdk.models.advisory_ip_intel_record import AdvisoryIpIntelRecord
 
 
 def _create_ip(converter_to_stix, entity: AdvisoryIpIntelRecord, logger):

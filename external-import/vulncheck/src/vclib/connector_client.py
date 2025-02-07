@@ -4,6 +4,8 @@ from typing import Any, Callable, List
 import requests
 import vulncheck_sdk
 from pycti import OpenCTIConnectorHelper
+from vclib.config_variables import ConfigConnector
+from vclib.models import data_source
 from vulncheck_sdk.models.advisory_botnet import AdvisoryBotnet
 from vulncheck_sdk.models.advisory_ip_intel_record import AdvisoryIpIntelRecord
 from vulncheck_sdk.models.advisory_ransomware_exploit import AdvisoryRansomwareExploit
@@ -16,9 +18,6 @@ from vulncheck_sdk.models.api_exploit_v3_result import ApiExploitV3Result
 from vulncheck_sdk.models.api_initial_access import ApiInitialAccess
 from vulncheck_sdk.models.api_nvd20_cve import ApiNVD20CVE
 from vulncheck_sdk.models.api_nvd20_cve_extended import ApiNVD20CVEExtended
-
-from vclib.config_variables import ConfigConnector
-from vclib.models import data_source
 
 
 class ConnectorClient:

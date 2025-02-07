@@ -1,18 +1,17 @@
 from datetime import datetime
 
 import stix2
-from pycti import OpenCTIConnectorHelper
-from vulncheck_sdk.models.advisory_cve_reference import AdvisoryCVEReference
-from vulncheck_sdk.models.advisory_threat_actor_with_external_objects import (
-    AdvisoryThreatActorWithExternalObjects,
-)
-
 import vclib.util.works as works
+from pycti import OpenCTIConnectorHelper
 from vclib.util.config import (
     SCOPE_EXTERNAL_REF,
     SCOPE_THREAT_ACTOR,
     SCOPE_VULNERABILITY,
     compare_config_to_target_scope,
+)
+from vulncheck_sdk.models.advisory_cve_reference import AdvisoryCVEReference
+from vulncheck_sdk.models.advisory_threat_actor_with_external_objects import (
+    AdvisoryThreatActorWithExternalObjects,
 )
 
 

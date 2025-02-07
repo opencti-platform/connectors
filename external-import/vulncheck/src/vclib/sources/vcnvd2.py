@@ -3,11 +3,9 @@ import os
 import zipfile
 
 import stix2
+import vclib.util.works as works
 from pycti import OpenCTIConnectorHelper
 from pydantic import ValidationError
-from vulncheck_sdk.models.api_nvd20_cve_extended import ApiNVD20CVEExtended
-
-import vclib.util.works as works
 from vclib.models import data_source
 from vclib.util.config import (
     SCOPE_SOFTWARE,
@@ -17,6 +15,7 @@ from vclib.util.config import (
 from vclib.util.cpe import parse_cpe_uri
 from vclib.util.memory_usage import log_memory_usage
 from vclib.util.nvd import check_size_of_stix_objects, check_vuln_description
+from vulncheck_sdk.models.api_nvd20_cve_extended import ApiNVD20CVEExtended
 
 
 def _create_vuln(

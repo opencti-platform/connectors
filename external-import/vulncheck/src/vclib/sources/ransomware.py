@@ -1,13 +1,12 @@
 import stix2
-from pycti import OpenCTIConnectorHelper
-from vulncheck_sdk.models.advisory_ransomware_exploit import AdvisoryRansomwareExploit
-
 import vclib.util.works as works
+from pycti import OpenCTIConnectorHelper
 from vclib.util.config import (
     SCOPE_MALWARE,
     SCOPE_VULNERABILITY,
     compare_config_to_target_scope,
 )
+from vulncheck_sdk.models.advisory_ransomware_exploit import AdvisoryRansomwareExploit
 
 
 def _create_malware(

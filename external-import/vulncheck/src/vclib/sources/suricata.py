@@ -1,7 +1,6 @@
+import vclib.util.works as works
 from pycti import OpenCTIConnectorHelper
 from stix2.v21.vocab import PATTERN_TYPE_SURICATA
-
-import vclib.util.works as works
 from vclib.models.rule import Rule, RuleParser
 from vclib.util.config import SCOPE_INDICATOR, compare_config_to_target_scope
 

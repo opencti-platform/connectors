@@ -1,9 +1,8 @@
 import stix2
-from pycti import OpenCTIConnectorHelper
-from vulncheck_sdk.models.api_epss_data import ApiEPSSData
-
 import vclib.util.works as works
+from pycti import OpenCTIConnectorHelper
 from vclib.util.config import SCOPE_VULNERABILITY, compare_config_to_target_scope
+from vulncheck_sdk.models.api_epss_data import ApiEPSSData
 
 
 def _create_vuln(converter_to_stix, entity: ApiEPSSData, logger) -> stix2.Vulnerability:

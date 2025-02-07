@@ -1,14 +1,13 @@
 import stix2
-from pycti import OpenCTIConnectorHelper
-from vulncheck_sdk.models.api_initial_access import ApiInitialAccess
-
 import vclib.util.works as works
+from pycti import OpenCTIConnectorHelper
 from vclib.util.config import (
     SCOPE_SOFTWARE,
     SCOPE_VULNERABILITY,
     compare_config_to_target_scope,
 )
 from vclib.util.cpe import parse_cpe_uri
+from vulncheck_sdk.models.api_initial_access import ApiInitialAccess
 
 
 def _create_vuln(

@@ -2,9 +2,8 @@ import sys
 from datetime import datetime
 
 import stix2
-from pycti import OpenCTIConnectorHelper
-
 import vclib.util.works as works
+from pycti import OpenCTIConnectorHelper
 from vclib.util.config import (
     get_configured_sources,
     get_intersection_of_string_lists,
