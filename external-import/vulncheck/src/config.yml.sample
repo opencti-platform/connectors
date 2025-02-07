@@ -1,14 +1,14 @@
 opencti:
-  url: 'http://localhost:PORT'
-  token: 'ChangeMe'
+  url: "http://localhost:PORT"
+  token: "ChangeMe"
 
 connector:
-  id: 'ChangeMe'
-  type: 'EXTERNAL_IMPORT'
-  name: 'External Import Connector VulnCheck'
-  scope: 'VulnCheck'
-  log_level: 'info'
-  duration_period: 'PT5M' # Interval given for scheduler process in ISO-8601 format
+  id: "ChangeMe"
+  type: "EXTERNAL_IMPORT"
+  name: "External Import Connector VulnCheck"
+  scope: "vulnerability,malware,threat-actor,software,infrastructure,location,ip-addr,indicator,external-reference"
+  log_level: "info"
+  duration_period: "PT5M" # Interval given for scheduler process in ISO-8601 format
   #============================================#
   # Optional connector's definition parameters #
   #============================================#
@@ -20,6 +20,6 @@ connector:
   #send_to_directory_retention: 7
 
 connector_vulncheck:
-  api_base_url: 'ChangeMe'
-  api_key: 'ChangeMe'
-  data_sources: 'botnets,epss,exploits,initial-access,ipintel,nist-nvd2,snort,suricata,ransomware,threat-actors,vulncheck-kev,vulncheck-nvd2'
+  api_base_url: "ChangeMe"
+  api_key: "ChangeMe"
+  data_sources: "botnets,epss,exploits,initial-access,ipintel,nist-nvd2,snort,suricata,ransomware,threat-actors,vulncheck-kev,vulncheck-nvd2"

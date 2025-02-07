@@ -1,7 +1,7 @@
 version: "3"
 services:
   connector-vulncheck:
-    image: opencti/connector-vulncheck:6.2.4
+    image: opencti/connector-vulncheck:6.5.1
     environment:
       # Connector's generic execution parameters
       - OPENCTI_URL=http://localhost
@@ -9,7 +9,7 @@ services:
       # Connector's definition parameters REQUIRED
       - CONNECTOR_ID=CHANGEME
       - CONNECTOR_NAME=VulnCheck
-      - CONNECTOR_SCOPE=VulnCheck
+      - CONNECTOR_SCOPE=vulnerability,malware,threat-actor,infrastructure,location,ip-addr,indicator,external-reference
       - CONNECTOR_LOG_LEVEL=error
       - CONNECTOR_DURATION_PERIOD=PT5M # ISO8601 format in String, start with 'P...' for Period
 

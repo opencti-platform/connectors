@@ -77,15 +77,15 @@ Below are the parameters you'll need to set for OpenCTI:
 
 Below are the parameters you'll need to set for running the connector:
 
-| Parameter       | config.yml     | Docker Environment Variable        | Default                                                                                                                | Mandatory | Description                                                                 |
-|-----------------|----------------|------------------------------------|------------------------------------------------------------------------------------------------------------------------|-----------|-----------------------------------------------------------------------------|
-| Connector ID    | `id`           | `CONNECTOR_ID`                     | /                                                                                                                      | Yes       | A unique `UUIDv4` identifier for this connector.                            |
-| Connector Type  | `type`         | `CONNECTOR_TYPE`                   | EXTERNAL_IMPORT                                                                                                        | Yes       | Specifies the type of connector. Should always be set to `EXTERNAL_IMPORT`. |
-| Connector Name  | `name`         | `CONNECTOR_NAME`                   | VulnCheck                                                                                                              | Yes       | The name of the connector as it will appear in OpenCTI.                     |
-| Connector Scope | `scope`        | `CONNECTOR_SCOPE`                  | VulnCheck                                                                                                              | Yes       | Must be set as `VulnCheck`                                                  |
-| Log Level       | `log_level`    | `CONNECTOR_LOG_LEVEL`              | info                                                                                                                   | Yes       | Sets the verbosity of logs. Options: `debug`, `info`, `warn`, `error`.      |
-| API Base URL    | `api_base_url` | `CONNECTOR_VULNCHECK_API_BASE_URL` | None                                                                                                                   | Yes       | The base URL for the VulnCheck API (e.g., `https://api.vulncheck.com/v3`).  |
-| API Key         | `api_key`      | `CONNECTOR_VULNCHECK_API_KEY`      | None                                                                                                                   | Yes       | The API key for authenticating with VulnCheck's API.                        |
+| Parameter       | config.yml     | Docker Environment Variable        | Default                                                                                                                     | Mandatory | Description                                                                 |
+|-----------------|----------------|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|-----------|-----------------------------------------------------------------------------|
+| Connector ID    | `id`           | `CONNECTOR_ID`                     | /                                                                                                                           | Yes       | A unique `UUIDv4` identifier for this connector.                            |
+| Connector Type  | `type`         | `CONNECTOR_TYPE`                   | EXTERNAL_IMPORT                                                                                                             | Yes       | Specifies the type of connector. Should always be set to `EXTERNAL_IMPORT`. |
+| Connector Name  | `name`         | `CONNECTOR_NAME`                   | VulnCheck                                                                                                                   | Yes       | The name of the connector as it will appear in OpenCTI.                     |
+| Connector Scope | `scope`        | `CONNECTOR_SCOPE`                  | vulnerability,malware,threat-actor,infrastructure,location,ip-addr,indicator,external-reference                             | Yes       | The scope of data to import, a list of Stix Objects. |
+| Log Level       | `log_level`    | `CONNECTOR_LOG_LEVEL`              | info                                                                                                                        | Yes       | Sets the verbosity of logs. Options: `debug`, `info`, `warn`, `error`.      |
+| API Base URL    | `api_base_url` | `CONNECTOR_VULNCHECK_API_BASE_URL` | None                                                                                                                        | Yes       | The base URL for the VulnCheck API (e.g., `https://api.vulncheck.com/v3`).  |
+| API Key         | `api_key`      | `CONNECTOR_VULNCHECK_API_KEY`      | None                                                                                                                        | Yes       | The API key for authenticating with VulnCheck's API.                        |
 | Data Sources    | `data_sources` | `CONNECTOR_VULNCHECK_DATA_SOURCES` | botnets,epss,exploits,initial-access,ipintel,nist-nvd2,ransomware,snort,suricata,threat-actors,vulncheck-kev,vulncheck-nvd2 | Yes       | List of data sources to collect intelligence from.                          |
 
 ## Deployment
@@ -94,7 +94,7 @@ Below are the parameters you'll need to set for running the connector:
 
 Before building the Docker container, you need to set the version of pycti in
 `requirements.txt` equal to whatever version of OpenCTI you're running.
-Example, `pycti==5.12.20`. If you don't, it will take the latest version, but
+Example, `pycti==6.5.1`. If you don't, it will take the latest version, but
 sometimes the OpenCTI SDK fails to initialize.
 
 Build a Docker Image using the provided `Dockerfile`.
@@ -128,7 +128,7 @@ Install the required python dependencies (preferably in a virtual environment):
 pip3 install -r requirements.txt
 ```
 
-Then, start the connector from `vulncheck/src`:
+Then, start the connector from vulncheck/src:
 
 ```shell
 python3 main.py
@@ -190,32 +190,31 @@ including countries and related vulnerabilities.
 
 > [!WARNING]
 > Users should be aware of the significant resource impact when enabling the
-> `nist-nvd2` or `vulncheck-nvd2` data sources within the VulnCheck Connector.
+> `software` scope for the VulnCheck Connector.
 >
-> On the initial run, these feeds ingest every vulnerability available,
-> creating a massive number of STIX Objects and Relationships (e.g., Software
-> `has` Vulnerability).
+> For the data sources that include `software` objects in their scope
+> (`vulncheck-nvd2,nist-nvd2,initial-access`), this creates a very large number
+> of STIX objects and relationships between the `software` and `vulnerability`
+> objects. Please ensure your deployed OpenCTI environment is clustered and
+> prepared to handle this large volume of data before appending it to the
+> `CONNECTOR_SCOPE` in the [connector
+> configuration](#vulncheck-connector-configuration)
 >
-> Subsequent runs will only pull vulnerabilities published on the previous day,
-> significantly reducing the data volume after the initial ingestion. The first
-> run requires substantial RAM and processing time due to the volume of data
-> being processed. Please ensure your environment is prepared to support this
-> before enabling the source.
->
-> Sources can be also be disabled by removing them from the
+> Individual data sources can be be disabled by removing them from the
 > `CONNECTOR_VULNCHECK_DATA_SOURCES` variable in the [connector
 > configuration](#vulncheck-connector-configuration).
 
-To address this issue, set up two separate VulnCheck connectors, each dedicated
-to specific data sources:
+One way to separate these large data sources when `software` is in scope, is to create
 
 - Primary Connector:
-  - Sources: `botnet`, `exploits`, `vulncheck-kev`, etc...
-  - This connector will handle the main threat intelligence data without NVD
-    data, ensuring timely ingestion and accurate updates.
+  - Sources: `botnets,epss,exploits,ipintel,ransomware,snort,suricata,threat-actors,vulncheck-kev`
+  - Scope: `vulnerability,malware,threat-actor,infrastructure,location,ip-addr,indicator,external-reference`
+  - This connector will handle the main threat intelligence data without
+  `software`, ensuring timely ingestion.
 - Secondary Connector:
-  - Sources: `vulncheck-nvd2` or `nist-nvd2` only
-  - This connector will handle NVD data independently, which allows it
+  - Sources: `vulncheck-nvd2,nist-nvd2,initial-access` only
+  - Scope: `vulnerability,software`
+  - This connector will handle `software` data independently, which allows it
     to manage the high data volume without interfering with the ingestion of
     other data sources.
 
@@ -238,6 +237,6 @@ OpenCTI documentation for connectors:
 
 ## Maintainers
 
-This integration is maintained by VulnCheck, the maintainers are:
+This integration is maintained by:
 
 - [@maddawik](https://github.com/maddawik) - Primary maintainer
