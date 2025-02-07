@@ -4,6 +4,7 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Mapping, Optional
 
 import vt
@@ -28,7 +29,7 @@ class VirustotalLivehuntNotifications:
 
     def __init__(self):
         # Instantiate the connector helper from config
-        config_file_path = os.path.dirname(os.path.abspath(__file__)) + "/config.yml"
+        config_file_path = Path(__file__).parents[1].joinpath("config.yml")
         config = (
             yaml.load(open(config_file_path, encoding="utf-8"), Loader=yaml.FullLoader)
             if os.path.isfile(config_file_path)
@@ -220,7 +221,7 @@ class VirustotalLivehuntNotifications:
 
     def _is_scheduled(self, last_run: Optional[int], current_time: int) -> bool:
         if last_run is None:
-            self.helper.log_info(
+            self.helper.connector_logger.info(
                 "Virustotal Livehunt Notifications connector clean run"
             )
             return True
@@ -250,20 +251,24 @@ class VirustotalLivehuntNotifications:
 
     def run(self):
         """Run VirustotalLivehuntNotifications."""
-        self.helper.log_info("Starting Virustotal Livehunt Notifications Connector...")
+        self.helper.connector_logger.info(
+            "Starting Virustotal Livehunt Notifications Connector..."
+        )
         self.helper.metric.state("idle")
 
         while True:
-            self.helper.log_info(
+            self.helper.connector_logger.info(
                 "Running Virustotal Livehunt Notifications connector..."
             )
             run_interval = self._CONNECTOR_RUN_INTERVAL_SEC
 
             try:
-                self.helper.log_info(f"Connector interval sec: {run_interval}")
+                self.helper.connector_logger.info(
+                    f"Connector interval sec: {run_interval}"
+                )
                 timestamp = self._current_unix_timestamp()
                 current_state = self._load_state()
-                self.helper.log_info(
+                self.helper.connector_logger.info(
                     f"[Virustotal Livehunt Notifications] loaded state: {current_state}"
                 )
 
@@ -281,7 +286,7 @@ class VirustotalLivehuntNotifications:
                 if self._is_scheduled(last_run, timestamp):
                     self.helper.metric.inc("run_count")
                     self.helper.metric.state("running")
-                    self.helper.log_info(
+                    self.helper.connector_logger.info(
                         f"[Virustotal Livehunt Notifications] starting run at: {current_state}"
                     )
                     new_state = current_state.copy()
@@ -292,33 +297,36 @@ class VirustotalLivehuntNotifications:
                     new_state[self._STATE_LATEST_RUN_TIMESTAMP] = (
                         self._current_unix_timestamp()
                     )
-                    self.helper.log_info(
+                    self.helper.connector_logger.info(
                         f"[Virustotal Livehunt Notifications] Storing new state: {new_state}"
                     )
                     self.helper.set_state(new_state)
 
-                    self.helper.log_info("No new Livehunt Notifications found...")
+                    self.helper.connector_logger.info(
+                        "No new Livehunt Notifications found..."
+                    )
                     self.helper.metric.state("idle")
                 else:
                     run_interval = self._get_next_interval(
                         run_interval, timestamp, last_run
                     )
-                    self.helper.log_info(
+                    self.helper.connector_logger.info(
                         f"[Virustotal Livehunt Notifications] Connector will not run, next run in {run_interval} seconds"
                     )
 
             except (KeyboardInterrupt, SystemExit):
-                self.helper.log_info("Virustotal Livehunt Notifications connector stop")
+                self.helper.connector_logger.info(
+                    "Virustotal Livehunt Notifications connector stop"
+                )
                 sys.exit(0)
 
             except Exception as e:
                 self.helper.metric.inc("error_count")
-                self.helper.log_error(str(e))
-                sys.exit(0)
+                self.helper.connector_logger.error(str(e))
 
             if self.helper.connect_run_and_terminate:
                 self.helper.metric.state("stopped")
-                self.helper.log_info("Connector stop")
+                self.helper.connector_logger.info("Connector stop")
                 self.helper.force_ping()
                 sys.exit(0)
 

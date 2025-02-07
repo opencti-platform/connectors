@@ -75,14 +75,16 @@ class LivehuntBuilder:
         url = "/ioc_stream"
         filter = f"date:{start_date}+ source_type:hunting_ruleset"
         if self.tag is not None and self.tag != "":
-            self.helper.log_debug(f"Setting up filter with tag {self.tag}")
+            self.helper.connector_logger.debug(f"Setting up filter with tag {self.tag}")
             filter += f" notification_tag:{self.tag}"
 
         params = {
             "descriptors_only": "False",
             "filter": filter,
         }
-        self.helper.log_info(f"Url for notifications: {url} / params: {params}")
+        self.helper.connector_logger.info(
+            f"Url for notifications: {url} / params: {params}"
+        )
 
         files_iterator = self.client.iterator(url, params=params)
 
@@ -101,7 +103,7 @@ class LivehuntBuilder:
                 if not hasattr(vtobj, "type_extension"):
                     continue
                 elif vtobj.type_extension not in self.extensions:
-                    self.helper.log_info(
+                    self.helper.connector_logger.info(
                         f"Extension {vtobj.type_extension} not in filter {self.extensions}."
                     )
                     continue
@@ -112,19 +114,19 @@ class LivehuntBuilder:
                 or not self.min_positives
                 or vtobj.last_analysis_stats.get("malicious", 0) < self.min_positives
             ):
-                self.helper.log_info("Not enough detections")
+                self.helper.connector_logger.info("Not enough detections")
                 continue
 
             # If min size was set and file is below that size
             if self.min_file_size and self.min_file_size > int(vtobj.size):
-                self.helper.log_info(
+                self.helper.connector_logger.info(
                     f"File too small ({vtobj.size} < {self.min_file_size}"
                 )
                 continue
 
             # If max size was set and file is above that size
             if self.max_file_size and self.max_file_size < int(vtobj.size):
-                self.helper.log_info(
+                self.helper.connector_logger.info(
                     f"File too big ({vtobj.size} > {self.max_file_size}"
                 )
                 continue
@@ -132,7 +134,7 @@ class LivehuntBuilder:
             if self.max_age_days is not None:
                 time_diff = datetime.datetime.now() - vtobj.first_submission_date
                 if time_diff.days >= self.max_age_days:
-                    self.helper.log_info(
+                    self.helper.connector_logger.info(
                         f"First submission date {vtobj.first_submission_date} is too old (more than {self.max_age_days} days"
                     )
                     continue
@@ -208,7 +210,9 @@ class LivehuntBuilder:
         )
         alert = self.helper.api.incident.read(id=incident_id)
         if alert:
-            self.helper.log_info(f"Alert {alert['id']} already exists, skipping")
+            self.helper.connector_logger.info(
+                f"Alert {alert['id']} already exists, skipping"
+            )
             return None
         incident = stix2.Incident(
             id=incident_id,
@@ -222,7 +226,7 @@ class LivehuntBuilder:
             external_references=[external_reference],
             allow_custom=True,
         )
-        self.helper.log_debug(f"Adding alert: {incident}")
+        self.helper.connector_logger.debug(f"Adding alert: {incident}")
         self.bundle.append(incident)
         return incident["id"]
 
@@ -276,7 +280,9 @@ class LivehuntBuilder:
                 vt_score = self._compute_score(vtobj.last_analysis_stats)
         except ZeroDivisionError as e:
             self.helper.metric.inc("error_count")
-            self.helper.log_error(f"Unable to compute score of file, err = {e}")
+            self.helper.connector_logger.error(
+                f"Unable to compute score of file, err = {e}"
+            )
 
         external_reference = self.create_external_reference(
             f"https://www.virustotal.com/gui/file/{vtobj.sha256}",
@@ -375,7 +381,7 @@ class LivehuntBuilder:
 
         for rule in rules:
             if rule["rule_name"] == rule_name:
-                self.helper.log_debug(f"Adding rule name {rule_name}")
+                self.helper.connector_logger.debug(f"Adding rule name {rule_name}")
                 # Default valid_from with current date
                 valid_from = self.helper.api.stix2.format_date(
                     datetime.datetime.utcnow()
@@ -392,7 +398,7 @@ class LivehuntBuilder:
                         )
                     )
                 except ValueError as e:
-                    self.helper.log_error(
+                    self.helper.connector_logger.error(
                         f"Date not valid, setting to {valid_from}, err: {e}"
                     )
 
@@ -412,7 +418,7 @@ class LivehuntBuilder:
                         "x_opencti_main_observable_type": "StixFile",
                     },
                 )
-                self.helper.log_debug(
+                self.helper.connector_logger.debug(
                     f"[VirusTotal Livehunt Notifications] yara indicator created: {indicator}"
                 )
                 self.bundle.append(indicator)
@@ -469,7 +475,7 @@ class LivehuntBuilder:
         work_id = self.helper.api.work.initiate_work(
             self.helper.connect_id, friendly_name
         )
-        self.helper.log_info(
+        self.helper.connector_logger.info(
             f"[Virustotal Livehunt Notifications] workid {work_id} initiated"
         )
         return work_id
@@ -487,7 +493,7 @@ class LivehuntBuilder:
         """
         self.helper.metric.inc("record_send", len(self.bundle))
         bundle = stix2.Bundle(objects=self.bundle, allow_custom=True)
-        self.helper.log_debug(f"Sending bundle: {bundle}")
+        self.helper.connector_logger.debug(f"Sending bundle: {bundle}")
         serialized_bundle = bundle.serialize()
         self.helper.send_stix2_bundle(serialized_bundle, work_id=work_id)
         # Reset the bundle for the next import.
@@ -501,7 +507,7 @@ class LivehuntBuilder:
 
         # Download the file to a file like object
         file_obj = io.BytesIO()
-        self.helper.log_info(f"Downloading {vtobj.sha256}")
+        self.helper.connector_logger.info(f"Downloading {vtobj.sha256}")
         self.client.download_file(vtobj.sha256, file_obj)
         file_obj.seek(0)
         file_contents = file_obj.read()
