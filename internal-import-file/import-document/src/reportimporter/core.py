@@ -191,6 +191,7 @@ class ReportImporter:
     def _process_import(self, data: Dict) -> str:
         file_name = self._download_import_file(data)
         entity_id = data.get("entity_id", None)
+        file_markings = data.get("file_markings", [])
         bypass_validation = data.get("bypass_validation", False)
         entity = (
             self.helper.api.stix_core_object.read(id=entity_id)
@@ -225,7 +226,7 @@ class ReportImporter:
         observables, entities = self._process_parsing_results(parsed, entity)
         # Send results to OpenCTI
         observable_cnt = self._process_parsed_objects(
-            entity, observables, entities, bypass_validation, file_name
+            entity, observables, entities, bypass_validation, file_name, file_markings
         )
         entity_cnt = len(entities)
 
@@ -567,6 +568,7 @@ class ReportImporter:
         entities: List,
         bypass_validation: bool,
         file_name: str,
+        file_markings: List,
     ) -> int:
         if len(observables) == 0 and len(entities) == 0:
             return 0
@@ -747,6 +749,7 @@ class ReportImporter:
                 bypass_validation=bypass_validation,
                 file_name=file_name + ".json",
                 entity_id=entity["id"] if entity is not None else None,
+                file_markings=file_markings,
             )
 
         # len() - 1 because the report update increases the count by one

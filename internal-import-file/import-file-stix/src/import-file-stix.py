@@ -24,6 +24,7 @@ class ImportFileStix:
     def _process_message(self, data: Dict) -> str:
         file_fetch = data["file_fetch"]
         bypass_validation = data["bypass_validation"]
+        file_markings = data.get("file_markings", [])
         file_uri = self.helper.opencti_url + file_fetch
         self.helper.log_info(f"Importing the file {file_uri}")
 
@@ -43,6 +44,7 @@ class ImportFileStix:
             bypass_validation=bypass_validation,
             file_name=data["file_id"],
             entity_id=entity_id,
+            file_markings=file_markings,
         )
         if self.helper.get_validate_before_import() and not bypass_validation:
             return "Generated bundle sent for validation"

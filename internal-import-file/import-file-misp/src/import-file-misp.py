@@ -2035,6 +2035,7 @@ class MispImportFile:
     def _process_message(self, data):
         file_fetch = data["file_fetch"]
         bypass_validation = data["bypass_validation"]
+        file_markings = data.get("file_markings", [])
         file_uri = self.helper.opencti_url + file_fetch
         self.helper.log_info(f"Importing the file {file_uri}")
         file_content = self.helper.api.fetch_opencti_file(file_uri)
@@ -2058,6 +2059,7 @@ class MispImportFile:
                 bypass_validation=bypass_validation,
                 file_name=data["file_id"],
                 entity_id=entity_id,
+                file_markings=file_markings,
             )
             bundles_sent = bundles_sent + len(bundles_sent_event)
         if self.helper.get_validate_before_import() and not bypass_validation:

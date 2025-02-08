@@ -129,6 +129,7 @@ class ImportFileYARA:
         file_fetch = data["file_fetch"]
         filename = Path(file_fetch).name
         bypass_validation = data["bypass_validation"]
+        file_markings = data.get("file_markings", [])
         file_uri = self.helper.opencti_url + file_fetch
 
         file_content = self.helper.api.fetch_opencti_file(file_uri)
@@ -152,6 +153,7 @@ class ImportFileYARA:
             bypass_validation=bypass_validation,
             file_name=data["file_id"] + ".json",
             entity_id=entity_id,
+            file_markings=file_markings,
         )
         if self.helper.get_validate_before_import() and not bypass_validation:
             return "Generated bundle sent for validation"
